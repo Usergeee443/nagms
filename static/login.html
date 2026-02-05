@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kirish - NGMS</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        body {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg);
+            padding: 16px;
+        }
+        .login-container {
+            width: 100%;
+            max-width: 400px;
+        }
+        .login-card {
+            background: var(--surface);
+            border-radius: var(--radius-lg);
+            padding: 48px 36px;
+            box-shadow: var(--shadow-lg);
+        }
+        .login-logo {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+        .login-logo-text {
+            font-size: 32px;
+            font-weight: 800;
+            letter-spacing: -.5px;
+            color: var(--text);
+        }
+        .login-subtitle {
+            color: var(--text-secondary);
+            font-size: 14px;
+            margin-top: 6px;
+        }
+        .login-btn {
+            width: 100%;
+            padding: 14px;
+            font-size: 16px;
+            margin-top: 24px;
+            border-radius: var(--radius);
+        }
+        .login-footer {
+            text-align: center;
+            margin-top: 24px;
+            color: var(--text-tertiary);
+            font-size: 12px;
+        }
+        .login-error {
+            display: none;
+            background: rgba(255,59,48,.08);
+            color: var(--red);
+            padding: 10px 14px;
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            margin-bottom: 16px;
+        }
+        @media (max-width: 480px) {
+            .login-card { padding: 36px 24px; }
+            .login-logo-text { font-size: 26px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-card">
+            <div class="login-logo">
+                <div class="login-logo-text">NGMS</div>
+                <p class="login-subtitle">Nur & Garden Management System</p>
+            </div>
+
+            <div class="login-error" id="loginError"></div>
+
+            <form id="loginForm">
+                <div class="form-group">
+                    <label class="form-label">Foydalanuvchi nomi</label>
+                    <input type="text" id="username" class="form-input" required
+                        placeholder="admin" autocomplete="username">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Parol</label>
+                    <input type="password" id="password" class="form-input" required
+                        placeholder="Parolingiz" autocomplete="current-password">
+                </div>
+                <button type="submit" class="btn btn-primary login-btn" id="loginBtn">
+                    Kirish
+                </button>
+            </form>
+
+            <p class="login-footer">
+                &copy; 2025 Nur & Garden. Barcha huquqlar himoyalangan.
+            </p>
+        </div>
+    </div>
+
+    <script src="/static/js/api.js"></script>
+    <script>
+        if (getAuthToken()) window.location.href = '/dashboard.html';
+
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('loginBtn');
+            const errEl = document.getElementById('loginError');
+            const origText = btn.textContent;
+            btn.textContent = 'Kutilmoqda...';
+            btn.disabled = true;
+            errEl.style.display = 'none';
+
+            try {
+                const res = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: document.getElementById('username').value,
+                        password: document.getElementById('password').value
+                    })
+                });
+                const data = await res.json();
+                if (res.ok && data.access_token) {
+                    setAuthToken(data.access_token);
+                    window.location.href = '/dashboard.html';
+                } else {
+                    errEl.textContent = data.error || 'Kirish xatosi. Qaytadan urinib ko\'ring.';
+                    errEl.style.display = 'block';
+                }
+            } catch {
+                errEl.textContent = 'Server bilan bog\'lanishda xatolik yuz berdi.';
+                errEl.style.display = 'block';
+            } finally {
+                btn.textContent = origText;
+                btn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>

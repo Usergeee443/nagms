@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NGMS - Nur & Garden Management System</title>
+    <script>
+        // Redirect to dashboard or login
+        const token = localStorage.getItem('ngms_token');
+        if (token) {
+            window.location.href = '/dashboard.html';
+        } else {
+            window.location.href = '/login.html';
+        }
+    </script>
+</head>
+<body>
+    <p>Yo'naltirilmoqda...</p>
+</body>
+</html>

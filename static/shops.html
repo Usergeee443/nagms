@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Do'konlar - NGMS</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
+    <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header"><div class="sidebar-logo">NGMS</div></div>
+        <nav class="sidebar-nav">
+            <a href="/dashboard.html" class="nav-item"><span class="nav-icon">📊</span>Dashboard</a>
+            <a href="/products.html" class="nav-item"><span class="nav-icon">📦</span>Mahsulotlar</a>
+            <a href="/customers.html" class="nav-item"><span class="nav-icon">👥</span>Mijozlar</a>
+            <a href="/sales.html" class="nav-item"><span class="nav-icon">💰</span>Savdo</a>
+            <a href="/maps.html" class="nav-item"><span class="nav-icon">📍</span>Xaritalar</a>
+            <a href="/regions.html" class="nav-item"><span class="nav-icon">🗺️</span>Hududlar</a>
+            <a href="/shops.html" class="nav-item active"><span class="nav-icon">🏪</span>Do'konlar</a>
+            <a href="/ai.html" class="nav-item"><span class="nav-icon">🤖</span>AI Tahlil</a>
+        </nav>
+        <div class="sidebar-footer"><button class="btn btn-danger" style="width:100%" onclick="logout()">Chiqish</button></div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="page-header">
+            <div>
+                <h1 class="page-title">Do'konlar</h1>
+                <p class="page-subtitle">Barcha do'konlar ro'yxati</p>
+            </div>
+            <button class="btn btn-primary" onclick="showModal()">
+                ➕ Yangi Do'kon
+            </button>
+        </div>
+
+        <!-- Statistikalar -->
+        <div class="grid grid-3 mb-6">
+            <div class="stat-card gradient-green">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <p class="stat-label">Jami Do'konlar</p>
+                        <p class="stat-value" id="totalShops">0</p>
+                    </div>
+                    <span class="stat-icon">🏪</span>
+                </div>
+            </div>
+            <div class="stat-card gradient-blue">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <p class="stat-label">Faol Do'konlar</p>
+                        <p class="stat-value" id="activeShops">0</p>
+                    </div>
+                    <span class="stat-icon">✅</span>
+                </div>
+            </div>
+            <div class="stat-card gradient-orange">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <p class="stat-label">Hududlar</p>
+                        <p class="stat-value" id="totalRegions">0</p>
+                    </div>
+                    <span class="stat-icon">🗺️</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tez Qo'shish -->
+        <div class="card mb-6">
+            <div class="card-header">
+                <h3 class="card-title">⚡ Tez Do'kon Qo'shish</h3>
+            </div>
+            <div class="card-body">
+                <form id="quickShopForm">
+                    <div class="grid grid-4 mb-4">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label class="form-label">Nomi *</label>
+                            <input type="text" id="quickName" class="form-input" required placeholder="Do'kon nomi">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label class="form-label">Hudud *</label>
+                            <select id="quickRegion" class="form-select" required>
+                                <option value="">Tanlang...</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label class="form-label">Telefon</label>
+                            <input type="tel" id="quickPhone" class="form-input" placeholder="+998 90 123 45 67">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label class="form-label">Hajmi</label>
+                            <select id="quickSize" class="form-select">
+                                <option value="small">Kichik</option>
+                                <option value="medium" selected>O'rta</option>
+                                <option value="large">Katta</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="grid grid-4">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label class="form-label">Latitude</label>
+                            <input type="number" step="0.0000001" id="quickLatitude" class="form-input" placeholder="39.6547">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label class="form-label">Longitude</label>
+                            <input type="number" step="0.0000001" id="quickLongitude" class="form-input" placeholder="66.9597">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label class="form-label">&nbsp;</label>
+                            <button type="submit" class="btn btn-primary" style="width: 100%;">
+                                ➕ Qo'shish
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Do'konlar Jadvali -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">🏪 Do'konlar Ro'yxati</h3>
+                <span class="badge badge-info" id="shopCount">0 ta</span>
+            </div>
+            <div class="card-body" style="padding: 0;">
+                <div class="table-container">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Nomi</th>
+                                <th>Hudud</th>
+                                <th>Telefon</th>
+                                <th>Hajmi</th>
+                                <th>Status</th>
+                                <th>Amallar</th>
+                            </tr>
+                        </thead>
+                        <tbody id="shopsTable">
+                            <tr>
+                                <td colspan="6" class="text-center p-4">
+                                    <div class="spinner" style="margin: 0 auto;"></div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal -->
+    <div class="modal" id="shopModal">
+        <div class="modal-backdrop" onclick="hideModal()"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="modalTitle">Yangi Do'kon</h3>
+                <button class="modal-close" onclick="hideModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <form id="shopForm">
+                    <input type="hidden" id="shopId">
+                    <div class="form-group">
+                        <label class="form-label">Nomi *</label>
+                        <input type="text" id="shopName" class="form-input" required>
+                    </div>
+                    <div class="grid grid-2">
+                        <div class="form-group">
+                            <label class="form-label">Hudud *</label>
+                            <select id="shopRegion" class="form-select" required>
+                                <option value="">Tanlang...</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Telefon</label>
+                            <input type="tel" id="shopPhone" class="form-input">
+                        </div>
+                    </div>
+                    <div class="grid grid-2">
+                        <div class="form-group">
+                            <label class="form-label">Hajmi</label>
+                            <select id="shopSize" class="form-select">
+                                <option value="small">Kichik</option>
+                                <option value="medium">O'rta</option>
+                                <option value="large">Katta</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Status</label>
+                            <select id="shopStatus" class="form-select">
+                                <option value="active">Faol</option>
+                                <option value="passive">Passiv</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="grid grid-2">
+                        <div class="form-group">
+                            <label class="form-label">Latitude</label>
+                            <input type="number" step="0.0000001" id="shopLatitude" class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Longitude</label>
+                            <input type="number" step="0.0000001" id="shopLongitude" class="form-input">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="hideModal()">Bekor qilish</button>
+                <button class="btn btn-primary" onclick="saveShop()">Saqlash</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/api.js"></script>
+    <script>
+        // Auth check
+        if (!getAuthToken()) {
+            window.location.href = '/login.html';
+        }
+
+        let editingId = null;
+        let regions = [];
+
+        function logout() {
+            removeAuthToken();
+            window.location.href = '/login.html';
+        }
+
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('open');
+            document.querySelector('.sidebar-overlay').classList.toggle('active');
+        }
+
+        function showModal(shop = null) {
+            editingId = shop ? shop.id : null;
+            document.getElementById('modalTitle').textContent = shop ? 'Do\'konni tahrirlash' : 'Yangi Do\'kon';
+            
+            if (shop) {
+                document.getElementById('shopId').value = shop.id;
+                document.getElementById('shopName').value = shop.name;
+                document.getElementById('shopRegion').value = shop.region_id;
+                document.getElementById('shopPhone').value = shop.phone || '';
+                document.getElementById('shopSize').value = shop.size;
+                document.getElementById('shopStatus').value = shop.status;
+                document.getElementById('shopLatitude').value = shop.latitude || '';
+                document.getElementById('shopLongitude').value = shop.longitude || '';
+            } else {
+                document.getElementById('shopForm').reset();
+            }
+            
+            document.getElementById('shopModal').classList.add('active');
+        }
+
+        function hideModal() {
+            document.getElementById('shopModal').classList.remove('active');
+            editingId = null;
+        }
+
+        async function loadFormData() {
+            try {
+                regions = await regionsAPI.getAll();
+                document.getElementById('totalRegions').textContent = regions.length;
+
+                const regionOptions = '<option value="">Tanlang...</option>' + 
+                    regions.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
+
+                document.getElementById('quickRegion').innerHTML = regionOptions;
+                document.getElementById('shopRegion').innerHTML = regionOptions;
+            } catch (error) {
+                console.error('Form ma\'lumotlarini yuklashda xatolik:', error);
+            }
+        }
+
+        async function loadShops() {
+            try {
+                const shops = await shopsAPI.getAll();
+                document.getElementById('shopCount').textContent = shops.length + ' ta';
+                document.getElementById('totalShops').textContent = shops.length;
+                document.getElementById('activeShops').textContent = shops.filter(s => s.status === 'active').length;
+                
+                const tbody = document.getElementById('shopsTable');
+                
+                if (shops.length === 0) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="6">
+                                <div class="empty-state">
+                                    <div class="empty-state-icon">🏪</div>
+                                    <p class="empty-state-title">Do'konlar yo'q</p>
+                                    <p class="text-gray">Yuqoridagi formadan yangi do'kon qo'shing</p>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+
+                tbody.innerHTML = shops.map(shop => `
+                    <tr>
+                        <td><strong>${shop.name}</strong></td>
+                        <td>${shop.region_name || '-'}</td>
+                        <td>${shop.phone || '-'}</td>
+                        <td>
+                            <span class="badge ${shop.size === 'large' ? 'badge-success' : shop.size === 'medium' ? 'badge-info' : 'badge-warning'}">
+                                ${shop.size === 'large' ? 'Katta' : shop.size === 'medium' ? 'O\'rta' : 'Kichik'}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="badge ${shop.status === 'active' ? 'badge-success' : 'badge-danger'}">
+                                ${shop.status === 'active' ? 'Faol' : 'Passiv'}
+                            </span>
+                        </td>
+                        <td>
+                            <button class="action-btn edit" onclick='editShop(${JSON.stringify(shop)})' title="Tahrirlash">
+                                ✏️
+                            </button>
+                            <button class="action-btn delete" onclick="deleteShop(${shop.id})" title="O'chirish">
+                                🗑️
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error('Do\'konlarni yuklashda xatolik:', error);
+            }
+        }
+
+        function editShop(shop) {
+            showModal(shop);
+        }
+
+        async function saveShop() {
+            const shopData = {
+                name: document.getElementById('shopName').value,
+                region_id: parseInt(document.getElementById('shopRegion').value),
+                phone: document.getElementById('shopPhone').value || null,
+                size: document.getElementById('shopSize').value,
+                status: document.getElementById('shopStatus').value,
+                latitude: document.getElementById('shopLatitude').value ? parseFloat(document.getElementById('shopLatitude').value) : null,
+                longitude: document.getElementById('shopLongitude').value ? parseFloat(document.getElementById('shopLongitude').value) : null
+            };
+
+            try {
+                if (editingId) {
+                    await shopsAPI.update(editingId, shopData);
+                    showToast('Do\'kon yangilandi!', 'success');
+                } else {
+                    await shopsAPI.create(shopData);
+                    showToast('Do\'kon qo\'shildi!', 'success');
+                }
+                hideModal();
+                loadShops();
+            } catch (error) {
+                showToast('Xatolik: ' + error.message, 'error');
+            }
+        }
+
+        // Quick form
+        document.getElementById('quickShopForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const shopData = {
+                name: document.getElementById('quickName').value,
+                region_id: parseInt(document.getElementById('quickRegion').value),
+                phone: document.getElementById('quickPhone').value || null,
+                size: document.getElementById('quickSize').value,
+                latitude: document.getElementById('quickLatitude').value ? parseFloat(document.getElementById('quickLatitude').value) : null,
+                longitude: document.getElementById('quickLongitude').value ? parseFloat(document.getElementById('quickLongitude').value) : null
+            };
+
+            try {
+                await shopsAPI.create(shopData);
+                showToast('Do\'kon qo\'shildi!', 'success');
+                document.getElementById('quickShopForm').reset();
+                loadShops();
+            } catch (error) {
+                showToast('Xatolik: ' + error.message, 'error');
+            }
+        });
+
+        async function deleteShop(id) {
+            if (!confirm('Bu do\'konni o\'chirishni xohlaysizmi?')) return;
+            
+            try {
+                await shopsAPI.delete(id);
+                showToast('Do\'kon o\'chirildi', 'success');
+                loadShops();
+            } catch (error) {
+                showToast('Xatolik: ' + error.message, 'error');
+            }
+        }
+
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        // Initialize
+        loadFormData();
+        loadShops();
+    </script>
+</body>
+</html>
+

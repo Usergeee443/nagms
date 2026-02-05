@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Xaritalar - NGMS</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link href='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css' rel='stylesheet' />
+    <script src='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js'></script>
+</head>
+<body>
+    <button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
+    <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header"><div class="sidebar-logo">NGMS</div></div>
+        <nav class="sidebar-nav">
+            <a href="/dashboard.html" class="nav-item"><span class="nav-icon">📊</span>Dashboard</a>
+            <a href="/products.html" class="nav-item"><span class="nav-icon">📦</span>Mahsulotlar</a>
+            <a href="/customers.html" class="nav-item"><span class="nav-icon">👥</span>Mijozlar</a>
+            <a href="/sales.html" class="nav-item"><span class="nav-icon">💰</span>Savdo</a>
+            <a href="/maps.html" class="nav-item active"><span class="nav-icon">📍</span>Xaritalar</a>
+            <a href="/ai.html" class="nav-item"><span class="nav-icon">🤖</span>AI Tahlil</a>
+        </nav>
+        <div class="sidebar-footer"><button class="btn btn-danger" style="width:100%" onclick="logout()">Chiqish</button></div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="page-header">
+            <div>
+                <h1 class="page-title">Xaritalar</h1>
+                <p class="page-subtitle">Mijozlar joylashuvi</p>
+            </div>
+        </div>
+
+        <!-- Mijozlar Xaritasi -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">📍 Mijozlar Joylashuvi</h3>
+                <span class="badge badge-success" id="customersMapCount">0 ta mijoz</span>
+            </div>
+            <div class="card-body" style="padding: 0;">
+                <div id="customersMap" style="height: 500px; border-radius: 0 0 16px 16px;"></div>
+            </div>
+        </div>
+
+        <!-- Legend -->
+        <div class="card mt-4">
+            <div class="card-body">
+                <div class="flex gap-4 flex-wrap">
+                    <div class="flex items-center gap-2">
+                        <div style="width: 16px; height: 16px; background: #10b981; border-radius: 50%;"></div>
+                        <span>Mijoz joylashuvi</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="/static/js/api.js"></script>
+    <script>
+        // Auth check
+        if (!getAuthToken()) {
+            window.location.href = '/login.html';
+        }
+
+        let customersMap = null;
+        let mapboxToken = null;
+
+        function logout() {
+            removeAuthToken();
+            window.location.href = '/login.html';
+        }
+
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('open');
+            document.querySelector('.sidebar-overlay').classList.toggle('active');
+        }
+
+        async function initMap() {
+            try {
+                // Get Mapbox token
+                const tokenResponse = await configAPI.getMapboxToken();
+                mapboxToken = tokenResponse.token;
+                
+                if (!mapboxToken) {
+                    document.getElementById('customersMap').innerHTML = 
+                        '<div class="empty-state"><p>Mapbox token sozlanmagan</p></div>';
+                    return;
+                }
+                
+                mapboxgl.accessToken = mapboxToken;
+                
+                // Initialize map
+                customersMap = new mapboxgl.Map({
+                    container: 'customersMap',
+                    style: 'mapbox://styles/mapbox/streets-v12',
+                    center: [64.5853, 41.3775], // O'zbekiston markazi
+                    zoom: 5
+                });
+                
+                customersMap.addControl(new mapboxgl.NavigationControl());
+                
+                // Load data
+                await loadCustomersOnMap();
+                
+            } catch (error) {
+                console.error('Xaritani yuklashda xatolik:', error);
+            }
+        }
+
+        async function loadCustomersOnMap() {
+            try {
+                const customers = await customersAPI.getMapData();
+                document.getElementById('customersMapCount').textContent = customers.length + ' ta mijoz';
+                
+                customers.forEach(customer => {
+                    if (customer.latitude && customer.longitude) {
+                        const popup = new mapboxgl.Popup({ offset: 25 })
+                            .setHTML(`
+                                <div style="padding: 8px;">
+                                    <h4 style="font-weight: 600; margin-bottom: 4px;">${customer.name}</h4>
+                                    ${customer.additional_name ? `<p style="font-size: 12px; color: #666; margin-bottom: 4px;">${customer.additional_name}</p>` : ''}
+                                    ${customer.phone ? `<p style="font-size: 12px; color: #666; margin-bottom: 4px;">📞 ${customer.phone}</p>` : ''}
+                                    ${customer.address ? `<p style="font-size: 12px; color: #666;">📍 ${customer.address}</p>` : ''}
+                                </div>
+                            `);
+                        
+                        const el = document.createElement('div');
+                        el.style.cssText = 'width: 24px; height: 24px; background: #10b981; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.3); cursor: pointer;';
+                        
+                        new mapboxgl.Marker(el)
+                            .setLngLat([customer.longitude, customer.latitude])
+                            .setPopup(popup)
+                            .addTo(customersMap);
+                    }
+                });
+                
+                // Fit bounds
+                if (customers.length > 0) {
+                    const bounds = new mapboxgl.LngLatBounds();
+                    customers.forEach(customer => {
+                        if (customer.latitude && customer.longitude) {
+                            bounds.extend([customer.longitude, customer.latitude]);
+                        }
+                    });
+                    if (!bounds.isEmpty()) {
+                        customersMap.fitBounds(bounds, { padding: 50 });
+                    }
+                }
+            } catch (error) {
+                console.error('Mijozlarni yuklashda xatolik:', error);
+            }
+        }
+
+        // Initialize
+        initMap();
+    </script>
+</body>
+</html>

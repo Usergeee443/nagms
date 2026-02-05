@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mahsulotlar - NGMS</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
+    <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header"><div class="sidebar-logo">NGMS</div></div>
+        <nav class="sidebar-nav">
+            <a href="/dashboard.html" class="nav-item"><span class="nav-icon">📊</span>Dashboard</a>
+            <a href="/products.html" class="nav-item active"><span class="nav-icon">📦</span>Mahsulotlar</a>
+            <a href="/customers.html" class="nav-item"><span class="nav-icon">👥</span>Mijozlar</a>
+            <a href="/sales.html" class="nav-item"><span class="nav-icon">💰</span>Savdo</a>
+            <a href="/maps.html" class="nav-item"><span class="nav-icon">📍</span>Xaritalar</a>
+            <a href="/ai.html" class="nav-item"><span class="nav-icon">🤖</span>AI Tahlil</a>
+        </nav>
+        <div class="sidebar-footer"><button class="btn btn-danger" style="width:100%" onclick="logout()">Chiqish</button></div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="page-header">
+            <div>
+                <h1 class="page-title">Mahsulotlar</h1>
+                <p class="page-subtitle">Barcha mahsulotlar ro'yxati</p>
+            </div>
+            <button class="btn btn-primary" onclick="showModal()">
+                ➕ Yangi Mahsulot
+            </button>
+        </div>
+
+        <!-- Tez Qo'shish -->
+        <div class="card mb-6">
+            <div class="card-header">
+                <h3 class="card-title">⚡ Tez Mahsulot Qo'shish</h3>
+            </div>
+            <div class="card-body">
+                <form id="quickProductForm">
+                    <div class="grid grid-4 mb-4">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label class="form-label">Nomi *</label>
+                            <input type="text" id="quickName" class="form-input" required placeholder="Mahsulot nomi">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label class="form-label">Qadoq turi *</label>
+                            <select id="quickPackage" class="form-select" required>
+                                <option value="">Tanlang...</option>
+                                <option value="250g">250g</option>
+                                <option value="500g">500g</option>
+                                <option value="1kg">1kg</option>
+                                <option value="5kg">5kg</option>
+                                <option value="10kg">10kg</option>
+                                <option value="25kg">25kg</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label class="form-label">Tan narx *</label>
+                            <input type="number" id="quickPurchasePrice" class="form-input" step="100" required placeholder="10000">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label class="form-label">Sotuv narx *</label>
+                            <input type="number" id="quickSalePrice" class="form-input" step="100" required placeholder="15000">
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <button type="submit" class="btn btn-primary">
+                            ➕ Qo'shish
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Mahsulotlar Jadvali -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">📦 Mahsulotlar Ro'yxati</h3>
+                <span class="badge badge-info" id="productCount">0 ta</span>
+            </div>
+            <div class="card-body" style="padding: 0;">
+                <div class="table-container">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Nomi</th>
+                                <th>Qadoq</th>
+                                <th>Tan narx</th>
+                                <th>Sotuv narx</th>
+                                <th>Foyda %</th>
+                                <th>Amallar</th>
+                            </tr>
+                        </thead>
+                        <tbody id="productsTable">
+                            <tr>
+                                <td colspan="8" class="text-center p-4">
+                                    <div class="spinner" style="margin: 0 auto;"></div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal -->
+    <div class="modal" id="productModal">
+        <div class="modal-backdrop" onclick="hideModal()"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="modalTitle">Yangi Mahsulot</h3>
+                <button class="modal-close" onclick="hideModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <form id="productForm">
+                    <input type="hidden" id="productId">
+                    <div class="form-group">
+                        <label class="form-label">Nomi *</label>
+                        <input type="text" id="productName" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Qadoq turi *</label>
+                        <select id="productPackage" class="form-select" required>
+                            <option value="">Tanlang...</option>
+                            <option value="250g">250g</option>
+                            <option value="500g">500g</option>
+                            <option value="1kg">1kg</option>
+                            <option value="5kg">5kg</option>
+                            <option value="10kg">10kg</option>
+                            <option value="25kg">25kg</option>
+                        </select>
+                    </div>
+                    <div class="grid grid-2">
+                        <div class="form-group">
+                            <label class="form-label">Tan narx *</label>
+                            <input type="number" id="productPurchasePrice" class="form-input" step="100" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Sotuv narx *</label>
+                            <input type="number" id="productSalePrice" class="form-input" step="100" required>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="hideModal()">Bekor qilish</button>
+                <button class="btn btn-primary" onclick="saveProduct()">Saqlash</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/api.js"></script>
+    <script>
+        // Auth check
+        if (!getAuthToken()) {
+            window.location.href = '/login.html';
+        }
+
+        let editingId = null;
+
+        function logout() {
+            removeAuthToken();
+            window.location.href = '/login.html';
+        }
+
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('open');
+            document.querySelector('.sidebar-overlay').classList.toggle('active');
+        }
+
+        function formatNumber(num) {
+            return new Intl.NumberFormat('uz-UZ').format(num || 0);
+        }
+
+        function showModal(product = null) {
+            editingId = product ? product.id : null;
+            document.getElementById('modalTitle').textContent = product ? 'Mahsulotni tahrirlash' : 'Yangi Mahsulot';
+            
+            if (product) {
+                document.getElementById('productId').value = product.id;
+                document.getElementById('productName').value = product.name;
+                document.getElementById('productPackage').value = product.package_type;
+                document.getElementById('productPurchasePrice').value = product.purchase_price;
+                document.getElementById('productSalePrice').value = product.sale_price;
+            } else {
+                document.getElementById('productForm').reset();
+            }
+            
+            document.getElementById('productModal').classList.add('active');
+        }
+
+        function hideModal() {
+            document.getElementById('productModal').classList.remove('active');
+            editingId = null;
+        }
+
+        async function loadFormData() {
+            // Kategoriya va brend kerak emas
+        }
+
+        async function loadProducts() {
+            try {
+                const products = await productsAPI.getAll();
+                document.getElementById('productCount').textContent = products.length + ' ta';
+                const tbody = document.getElementById('productsTable');
+                
+                if (products.length === 0) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="6">
+                                <div class="empty-state">
+                                    <div class="empty-state-icon">📦</div>
+                                    <p class="empty-state-title">Mahsulotlar yo'q</p>
+                                    <p class="text-gray">Yuqoridagi formadan yangi mahsulot qo'shing</p>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+
+                tbody.innerHTML = products.map(product => `
+                    <tr>
+                        <td><strong>${product.name}</strong></td>
+                        <td><span class="badge badge-info">${product.package_type}</span></td>
+                        <td>${formatNumber(product.purchase_price)} so'm</td>
+                        <td><strong>${formatNumber(product.sale_price)} so'm</strong></td>
+                        <td>
+                            <span class="badge badge-success">
+                                ${product.margin_percent ? product.margin_percent.toFixed(1) : 0}%
+                            </span>
+                        </td>
+                        <td>
+                            <button class="action-btn edit" onclick='editProduct(${JSON.stringify(product)})' title="Tahrirlash">
+                                ✏️
+                            </button>
+                            <button class="action-btn delete" onclick="deleteProduct(${product.id})" title="O'chirish">
+                                🗑️
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error('Mahsulotlarni yuklashda xatolik:', error);
+            }
+        }
+
+        function editProduct(product) {
+            showModal(product);
+        }
+
+        async function saveProduct() {
+            const productData = {
+                name: document.getElementById('productName').value,
+                package_type: document.getElementById('productPackage').value,
+                purchase_price: parseFloat(document.getElementById('productPurchasePrice').value),
+                sale_price: parseFloat(document.getElementById('productSalePrice').value)
+            };
+
+            try {
+                if (editingId) {
+                    await productsAPI.update(editingId, productData);
+                    showToast('Mahsulot yangilandi!', 'success');
+                } else {
+                    await productsAPI.create(productData);
+                    showToast('Mahsulot qo\'shildi!', 'success');
+                }
+                hideModal();
+                loadProducts();
+            } catch (error) {
+                showToast('Xatolik: ' + error.message, 'error');
+            }
+        }
+
+        // Quick form
+        document.getElementById('quickProductForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const productData = {
+                name: document.getElementById('quickName').value,
+                package_type: document.getElementById('quickPackage').value,
+                purchase_price: parseFloat(document.getElementById('quickPurchasePrice').value),
+                sale_price: parseFloat(document.getElementById('quickSalePrice').value)
+            };
+
+            try {
+                await productsAPI.create(productData);
+                showToast('Mahsulot qo\'shildi!', 'success');
+                document.getElementById('quickProductForm').reset();
+                loadProducts();
+            } catch (error) {
+                showToast('Xatolik: ' + error.message, 'error');
+            }
+        });
+
+        async function deleteProduct(id) {
+            if (!confirm('Bu mahsulotni o\'chirishni xohlaysizmi?')) return;
+            
+            try {
+                await productsAPI.delete(id);
+                showToast('Mahsulot o\'chirildi', 'success');
+                loadProducts();
+            } catch (error) {
+                showToast('Xatolik: ' + error.message, 'error');
+            }
+        }
+
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        // Initialize
+        loadFormData();
+        loadProducts();
+    </script>
+</body>
+</html>
+

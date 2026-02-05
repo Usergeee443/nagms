@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - NGMS</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
+    <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header"><div class="sidebar-logo">NGMS</div></div>
+        <nav class="sidebar-nav">
+            <a href="/dashboard.html" class="nav-item active"><span class="nav-icon">📊</span>Dashboard</a>
+            <a href="/products.html" class="nav-item"><span class="nav-icon">📦</span>Mahsulotlar</a>
+            <a href="/customers.html" class="nav-item"><span class="nav-icon">👥</span>Mijozlar</a>
+            <a href="/sales.html" class="nav-item"><span class="nav-icon">💰</span>Savdo</a>
+            <a href="/maps.html" class="nav-item"><span class="nav-icon">📍</span>Xaritalar</a>
+            <a href="/ai.html" class="nav-item"><span class="nav-icon">🤖</span>AI Tahlil</a>
+        </nav>
+        <div class="sidebar-footer"><button class="btn btn-danger" style="width:100%" onclick="logout()">Chiqish</button></div>
+    </aside>
+
+    <main class="main-content">
+        <div class="page-header">
+            <div>
+                <h1 class="page-title">Dashboard</h1>
+                <p class="page-subtitle">Biznes statistikasi</p>
+            </div>
+        </div>
+
+        <!-- Xato banner -->
+        <div id="dashboardErrorBanner" class="card mb-4" style="display:none; border-left:3px solid var(--red);">
+            <div class="card-body flex justify-between items-center">
+                <p id="dashboardErrorText" class="text-gray" style="margin:0">Ma'lumotlar yuklanmadi.</p>
+                <button class="btn btn-sm btn-primary" onclick="document.getElementById('dashboardErrorBanner').style.display='none'; loadDashboard();">Qayta yuklash</button>
+            </div>
+        </div>
+
+        <!-- Asosiy ko'rsatkichlar -->
+        <div class="grid grid-4 mb-6">
+            <div class="stat-card gradient-green">
+                <p class="stat-label">Umumiy Aylanma</p>
+                <p class="stat-value" id="totalRevenue">0 so'm</p>
+            </div>
+            <div class="stat-card gradient-blue">
+                <p class="stat-label">Oylik Savdo</p>
+                <p class="stat-value" id="monthlySales">0 so'm</p>
+                <small class="text-gray" id="growthPercent">+0%</small>
+            </div>
+            <div class="stat-card gradient-purple">
+                <p class="stat-label">Sof Foyda (jami)</p>
+                <p class="stat-value" id="totalProfit">0 so'm</p>
+                <small class="text-gray" id="monthlyProfitHint">Ushbu oy: 0 so'm</small>
+            </div>
+            <div class="stat-card gradient-orange">
+                <p class="stat-label">Jami Sotilgan</p>
+                <p class="stat-value" id="totalQuantitySold">0 dona</p>
+                <small class="text-gray" id="monthlyQuantityHint">Ushbu oy: 0 dona</small>
+            </div>
+        </div>
+
+        <!-- Qo'shimcha -->
+        <div class="grid grid-4 mb-6">
+            <div class="stat-card">
+                <p class="stat-label">Kunlik Savdo</p>
+                <p class="stat-value" id="dailySales">0</p>
+            </div>
+            <div class="stat-card">
+                <p class="stat-label">Yillik Savdo</p>
+                <p class="stat-value" id="yearlySales">0</p>
+            </div>
+            <div class="stat-card">
+                <p class="stat-label">Mijozlar</p>
+                <p class="stat-value" id="customersCount">0</p>
+            </div>
+            <div class="stat-card">
+                <p class="stat-label">Mahsulotlar</p>
+                <p class="stat-value" id="productsCount">0</p>
+            </div>
+        </div>
+
+        <!-- Top Mahsulot va Mijoz -->
+        <div class="grid grid-2 mb-6">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Eng Ko'p Sotilgan Mahsulot</h3>
+                </div>
+                <div class="card-body">
+                    <p id="topProductName" style="font-size:20px; font-weight:700; margin-bottom:8px;">-</p>
+                    <div class="flex gap-4">
+                        <div>
+                            <small class="text-gray">Miqdor</small>
+                            <p id="topProductQuantity" class="font-bold">0</p>
+                        </div>
+                        <div>
+                            <small class="text-gray">Summa</small>
+                            <p id="topProductAmount" class="font-bold">0</p>
+                        </div>
+                    </div>
+                    <canvas id="topProductsChart" height="160" style="margin-top:16px;"></canvas>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Eng Ko'p Xarid Qilgan Mijoz</h3>
+                </div>
+                <div class="card-body">
+                    <p id="topCustomerName" style="font-size:20px; font-weight:700; margin-bottom:8px;">-</p>
+                    <div>
+                        <small class="text-gray">Jami xarid</small>
+                        <p id="topCustomerAmount" class="font-bold">0</p>
+                    </div>
+                    <canvas id="topCustomersChart" height="160" style="margin-top:16px;"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- O'sish grafik -->
+        <div class="card mb-6">
+            <div class="card-header">
+                <h3 class="card-title">O'sish Dinamikasi (12 oy)</h3>
+            </div>
+            <div class="card-body">
+                <canvas id="growthChart" height="80"></canvas>
+            </div>
+        </div>
+
+        <!-- AI -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">AI Tavsiyalari</h3>
+            </div>
+            <div class="card-body">
+                <div id="aiRecommendations" class="text-gray">
+                    <div class="spinner" style="margin:0 auto;"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="/static/js/api.js"></script>
+    <script>
+        if (!getAuthToken()) window.location.href = '/login.html';
+
+        function logout() { removeAuthToken(); window.location.href = '/login.html'; }
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('open');
+            document.querySelector('.sidebar-overlay').classList.toggle('active');
+        }
+
+        function fmt(n) { return new Intl.NumberFormat('uz-UZ').format(n || 0); }
+        function fmtC(n) { return fmt(n) + " so'm"; }
+
+        const chartColors = ['#0071e3','#34c759','#ff9500','#af52de','#ff3b30'];
+
+        async function loadDashboard() {
+            const errBanner = document.getElementById('dashboardErrorBanner');
+            errBanner.style.display = 'none';
+            try {
+                const s = await dashboardAPI.getStats();
+                if (s && s.error) {
+                    document.getElementById('dashboardErrorText').textContent = s.error;
+                    errBanner.style.display = 'block';
+                    return;
+                }
+                document.getElementById('totalRevenue').textContent = fmtC(s.total_revenue);
+                document.getElementById('monthlySales').textContent = fmtC(s.monthly_sales);
+                document.getElementById('totalProfit').textContent = fmtC(s.total_profit);
+                document.getElementById('monthlyProfitHint').textContent = 'Ushbu oy: ' + fmtC(s.monthly_profit);
+                const totalQ = s.total_quantity_sold_all_time ?? s.total_quantity_sold ?? 0;
+                document.getElementById('totalQuantitySold').textContent = fmt(totalQ) + ' dona';
+                document.getElementById('monthlyQuantityHint').textContent = 'Ushbu oy: ' + fmt(s.total_quantity_sold || 0) + ' dona';
+                document.getElementById('dailySales').textContent = fmtC(s.daily_sales);
+                document.getElementById('yearlySales').textContent = fmtC(s.yearly_sales);
+                document.getElementById('customersCount').textContent = s.customers_count || 0;
+                document.getElementById('productsCount').textContent = s.products_count || 0;
+                const g = s.growth_percent || 0;
+                document.getElementById('growthPercent').textContent = (g>=0?'+':'') + g.toFixed(1) + '%';
+
+                const d = await dashboardAPI.getDetailedStats();
+                document.getElementById('topProductName').textContent = d.top_product.name;
+                document.getElementById('topProductQuantity').textContent = fmt(d.top_product.quantity);
+                document.getElementById('topProductAmount').textContent = fmtC(d.top_product.amount);
+                document.getElementById('topCustomerName').textContent = d.top_customer.name;
+                document.getElementById('topCustomerAmount').textContent = fmtC(d.top_customer.amount);
+
+                // Growth chart
+                const gd = await dashboardAPI.getGrowthDynamics();
+                new Chart(document.getElementById('growthChart'), {
+                    type: 'line',
+                    data: {
+                        labels: gd.map(x => { const [y,m]=x.month.split('-'); return new Date(y,m-1).toLocaleDateString('uz-UZ',{month:'short'}); }),
+                        datasets: [{
+                            label: 'Savdo',
+                            data: gd.map(x => x.sales),
+                            borderColor: '#0071e3',
+                            backgroundColor: 'rgba(0,113,227,.08)',
+                            borderWidth: 2,
+                            tension: .4,
+                            fill: true,
+                            pointRadius: 3,
+                            pointBackgroundColor: '#0071e3'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            y: { beginAtZero: true, ticks: { callback: v => fmt(v) }, grid: { color: 'rgba(0,0,0,.04)' } },
+                            x: { grid: { display: false } }
+                        }
+                    }
+                });
+
+                // Top products chart
+                const tp = await dashboardAPI.getTopProducts();
+                new Chart(document.getElementById('topProductsChart'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: tp.slice(0,5).map(p => p.name),
+                        datasets: [{ data: tp.slice(0,5).map(p => p.total_quantity), backgroundColor: chartColors }]
+                    },
+                    options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 12 } } } } }
+                });
+
+                // Top customers chart
+                const tc = await dashboardAPI.getTopCustomers();
+                new Chart(document.getElementById('topCustomersChart'), {
+                    type: 'bar',
+                    data: {
+                        labels: tc.map(c => c.name.length > 12 ? c.name.substring(0,12) + '...' : c.name),
+                        datasets: [{ label: 'Xarid', data: tc.map(c => c.total_amount), backgroundColor: '#0071e3', borderRadius: 6 }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,.04)' } },
+                            x: { grid: { display: false } }
+                        }
+                    }
+                });
+
+                // AI
+                try {
+                    const ai = await aiAPI.getRecommendations();
+                    document.getElementById('aiRecommendations').innerHTML = '<p style="white-space:pre-line;line-height:1.8;">' + ai.recommendations + '</p>';
+                } catch {
+                    document.getElementById('aiRecommendations').innerHTML = '<p class="text-gray">AI tavsiyalari mavjud emas.</p>';
+                }
+            } catch (error) {
+                console.error('Dashboard xatolik:', error);
+                document.getElementById('dashboardErrorText').textContent = (error && error.message) || 'Server bilan ulanishda xatolik.';
+                document.getElementById('dashboardErrorBanner').style.display = 'block';
+            }
+        }
+
+        loadDashboard();
+    </script>
+</body>
+</html>
