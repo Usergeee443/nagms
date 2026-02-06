@@ -149,3 +149,74 @@ class OnlineSale(db.Model):
             'created_at': self.created_at.isoformat() if self.created_at else None
         }
 
+
+# Hududlar va Do'konlar (Regions & Shops)
+region_shop_products = db.Table(
+    'shop_products',
+    db.Column('shop_id', db.Integer, db.ForeignKey('shops.id'), primary_key=True),
+    db.Column('product_id', db.Integer, db.ForeignKey('products.id'), primary_key=True)
+)
+
+
+class Region(db.Model):
+    __tablename__ = 'regions'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(200), nullable=False)
+    latitude = db.Column(db.Numeric(10, 7))
+    longitude = db.Column(db.Numeric(10, 7))
+    polygon_coordinates = db.Column(db.Text)
+    status = db.Column(db.String(30), default='planned')
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    shops = db.relationship('Shop', backref='region', lazy=True)
+
+    def to_dict(self):
+        shops_count = len(self.shops) if self.shops else 0
+        import json
+        poly = None
+        if self.polygon_coordinates:
+            try:
+                poly = json.loads(self.polygon_coordinates) if isinstance(self.polygon_coordinates, str) else self.polygon_coordinates
+            except Exception:
+                poly = None
+        return {
+            'id': self.id,
+            'name': self.name,
+            'latitude': float(self.latitude) if self.latitude else None,
+            'longitude': float(self.longitude) if self.longitude else None,
+            'polygon_coordinates': poly,
+            'status': self.status,
+            'shops_count': shops_count,
+        }
+
+
+class Shop(db.Model):
+    __tablename__ = 'shops'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(200), nullable=False)
+    region_id = db.Column(db.Integer, db.ForeignKey('regions.id'), nullable=False)
+    phone = db.Column(db.String(50))
+    latitude = db.Column(db.Numeric(10, 7))
+    longitude = db.Column(db.Numeric(10, 7))
+    size = db.Column(db.String(20), default='medium')
+    status = db.Column(db.String(20), default='active')
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    products = db.relationship('Product', secondary=region_shop_products, backref=db.backref('shops', lazy='dynamic'))
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'region_id': self.region_id,
+            'region_name': self.region.name if self.region else None,
+            'phone': self.phone,
+            'latitude': float(self.latitude) if self.latitude else None,
+            'longitude': float(self.longitude) if self.longitude else None,
+            'size': self.size,
+            'status': self.status,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
+        }

@@ -3,417 +3,141 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hududlar & Xarita - NGMS (Leaflet)</title>
+    <title>Hududlar & Xarita - NGMS</title>
     <link rel="stylesheet" href="/static/css/style.css">
-    <!-- Leaflet CSS -->
+    <script>if(localStorage.getItem('ngms_sb')==='c')document.documentElement.classList.add('collapsed')</script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
 <body>
-    <button class="sidebar-toggle" onclick="document.getElementById('sidebar').classList.toggle('open');document.querySelector('.sidebar-overlay').classList.toggle('active');">☰</button>
-    <div class="sidebar-overlay" onclick="document.getElementById('sidebar').classList.toggle('open');document.querySelector('.sidebar-overlay').classList.toggle('active');"></div>
-    <aside class="sidebar" id="sidebar">
-        <div class="sidebar-header"><div class="sidebar-logo">NGMS</div></div>
-        <nav class="sidebar-nav">
-            <a href="/dashboard.html" class="nav-item"><span class="nav-icon">📊</span>Dashboard</a>
-            <a href="/products.html" class="nav-item"><span class="nav-icon">📦</span>Mahsulotlar</a>
-            <a href="/customers.html" class="nav-item"><span class="nav-icon">👥</span>Mijozlar</a>
-            <a href="/sales.html" class="nav-item"><span class="nav-icon">💰</span>Savdo</a>
-            <a href="/maps.html" class="nav-item"><span class="nav-icon">📍</span>Xaritalar</a>
-            <a href="/regions.html" class="nav-item active"><span class="nav-icon">🗺️</span>Hududlar</a>
-            <a href="/shops.html" class="nav-item"><span class="nav-icon">🏪</span>Do'konlar</a>
-            <a href="/ai.html" class="nav-item"><span class="nav-icon">🤖</span>AI Tahlil</a>
-        </nav>
-        <div class="sidebar-footer"><button class="btn btn-danger" style="width:100%" onclick="logout()">Chiqish</button></div>
-    </aside>
 
-    <main class="main-content">
-        <div class="page-header">
-            <div>
-                <h1 class="page-title">Hududlar & Xarita</h1>
-                <p class="page-subtitle">Leaflet (Bepul)</p>
-            </div>
-            <div class="flex gap-2">
-                <a href="/regions.html" class="btn btn-outline">Mapbox versiyasi</a>
-                <button onclick="showModal('regionModal')" class="btn btn-primary">+ Yangi Hudud</button>
-            </div>
-        </div>
-
-        <div class="card mb-6">
-            <div class="card-header">
-                <div class="flex gap-4 flex-wrap items-center">
-                    <div class="flex items-center gap-2"><div style="width:14px;height:14px;background:var(--green);border-radius:4px;"></div><span style="font-size:13px;">Egallangan</span></div>
-                    <div class="flex items-center gap-2"><div style="width:14px;height:14px;background:var(--orange);border-radius:4px;"></div><span style="font-size:13px;">Jarayonda</span></div>
-                    <div class="flex items-center gap-2"><div style="width:14px;height:14px;background:var(--red);border-radius:4px;"></div><span style="font-size:13px;">Rejada</span></div>
-                </div>
-                <div class="flex gap-2">
-                    <select id="regionSelect" class="form-select" style="width:auto;padding:8px 36px 8px 12px;">
-                        <option value="">Barcha viloyatlar</option>
-                    </select>
-                    <button onclick="fitToUzbekistan()" class="btn btn-sm btn-primary">Butun O'zbekiston</button>
-                </div>
-            </div>
-            <div class="card-body" style="padding:0;">
-                <div id="map" style="height:700px;border-radius:0 0 var(--radius-lg) var(--radius-lg);"></div>
-            </div>
-        </div>
-
-        <div class="card">
-            <div class="card-header">
-                <h3 class="card-title">Hududlar Ro'yxati</h3>
-            </div>
-            <div class="card-body" id="regionsList">
-                <div class="spinner" style="margin:0 auto;"></div>
-            </div>
-        </div>
-    </main>
-
-    <div id="regionModal" class="modal">
-        <div class="modal-backdrop" onclick="hideModal('regionModal')"></div>
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 class="modal-title">Yangi Hudud</h3>
-                <button class="modal-close" onclick="hideModal('regionModal')">&times;</button>
-            </div>
-            <div class="modal-body">
-                <form id="regionForm">
-                    <div class="form-group">
-                        <label class="form-label">Viloyat/Hudud nomi *</label>
-                        <select id="regionName" class="form-select" required>
-                            <option value="">Tanlang...</option>
-                        </select>
-                        <small class="text-gray">Yoki boshqa hudud nomini kiriting</small>
-                        <input type="text" id="regionNameCustom" class="form-input mt-4" placeholder="Boshqa hudud nomi">
-                    </div>
-                    <div class="grid grid-2">
-                        <div class="form-group">
-                            <label class="form-label">Latitude</label>
-                            <input type="number" step="any" id="regionLatitude" class="form-input">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Longitude</label>
-                            <input type="number" step="any" id="regionLongitude" class="form-input">
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Status</label>
-                        <select id="regionStatus" class="form-select">
-                            <option value="planned">Rejada</option>
-                            <option value="in_progress">Jarayonda</option>
-                            <option value="occupied">Egallangan</option>
-                        </select>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-outline" onclick="hideModal('regionModal')">Bekor qilish</button>
-                <button class="btn btn-primary" onclick="document.getElementById('regionForm').requestSubmit()">Saqlash</button>
-            </div>
+<main class="main-content">
+    <div class="page-header">
+        <div><h1 class="page-title">Hududlar & Xarita</h1><p class="page-subtitle">Leaflet (Bepul)</p></div>
+        <div class="flex gap-2">
+            <a href="/regions.html" class="btn btn-outline btn-sm">Mapbox versiyasi</a>
+            <button onclick="showRegionModal()" class="btn btn-primary btn-sm">+ Yangi Hudud</button>
         </div>
     </div>
 
-    <script src="/static/js/api.js"></script>
-    <script src="/static/js/common.js"></script>
-    <script src="/static/js/uzbekistan-regions.js"></script>
-    <script src="/static/js/uzbekistan-geojson.js"></script>
-    <script>
-        checkAuth();
+    <div class="card mb-4">
+        <div class="card-header">
+            <div class="flex gap-4 items-center">
+                <div class="flex items-center gap-2"><div style="width:12px;height:12px;background:var(--green);border-radius:3px"></div><span style="font-size:12px;color:var(--text-secondary)">Egallangan</span></div>
+                <div class="flex items-center gap-2"><div style="width:12px;height:12px;background:var(--orange);border-radius:3px"></div><span style="font-size:12px;color:var(--text-secondary)">Jarayonda</span></div>
+                <div class="flex items-center gap-2"><div style="width:12px;height:12px;background:var(--red);border-radius:3px"></div><span style="font-size:12px;color:var(--text-secondary)">Rejada</span></div>
+            </div>
+            <div class="flex gap-2">
+                <select id="regionSelect" class="form-select" style="width:auto;padding:6px 32px 6px 10px;font-size:12px"><option value="">Barcha viloyatlar</option></select>
+                <button onclick="fitToUzbekistan()" class="btn btn-sm btn-primary">O'zbekiston</button>
+            </div>
+        </div>
+        <div class="card-body" style="padding:0"><div id="map" style="height:600px;border-radius:0 0 var(--radius) var(--radius)"></div></div>
+    </div>
 
-        let map;
-        let markers = [];
-        let viloyatLayers = [];
+    <div class="card">
+        <div class="card-header"><h3 class="card-title">Hududlar ro'yxati</h3></div>
+        <div class="card-body" id="regionsList"><div class="spinner" style="margin:0 auto"></div></div>
+    </div>
+</main>
 
-        function logout() {
-            removeAuthToken();
-            window.location.href = '/login.html';
-        }
-
-        function hideModal(modalId) {
-            document.getElementById(modalId).classList.remove('active');
-        }
-
-        // Initialize Leaflet map
-        function initMap() {
-            // Leaflet xarita yaratish (hech qanday API key talab qilmaydi)
-            map = L.map('map', {
-                center: [41.3, 66.95], // O'zbekiston markazi
-                zoom: 6,
-                minZoom: 5,
-                maxZoom: 12,
-                maxBounds: [
-                    [uzbekistanBounds.south, uzbekistanBounds.west],
-                    [uzbekistanBounds.north, uzbekistanBounds.east]
-                ]
-            });
-
-            // OpenStreetMap tile layer (bepul)
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '© OpenStreetMap contributors',
-                maxZoom: 19
-            }).addTo(map);
-
-            // Viloyatlar GeoJSON qo'shish
-            addUzbekistanViloyatlari();
-            
-            // Viloyatlar ro'yxatini to'ldirish
-            loadViloyatlarList();
-        }
-
-        // O'zbekiston viloyatlarini qo'shish
-        function addUzbekistanViloyatlari() {
-            uzbekistanViloyatlari.features.forEach(feature => {
-                const viloyat = feature.properties.name;
-                const color = viloyatRanglari[viloyat] || '#E5E7EB';
-                
-                const layer = L.geoJSON(feature, {
-                    style: {
-                        fillColor: color,
-                        fillOpacity: 0.3,
-                        color: '#1F2937',
-                        weight: 2,
-                        opacity: 0.8
-                    },
-                    onEachFeature: function(feature, layer) {
-                        layer.bindPopup(`<strong>${feature.properties.name_uz}</strong>`);
-                        layer.on({
-                            click: function() {
-                                const region = uzbekistanRegions[feature.properties.name];
-                                if (region) {
-                                    map.flyTo(region.center, 8, {
-                                        duration: 1.5
-                                    });
-                                }
-                            },
-                            mouseover: function(e) {
-                                const layer = e.target;
-                                layer.setStyle({
-                                    fillOpacity: 0.6,
-                                    weight: 3
-                                });
-                            },
-                            mouseout: function(e) {
-                                const layer = e.target;
-                                layer.setStyle({
-                                    fillOpacity: 0.3,
-                                    weight: 2
-                                });
-                            }
-                        });
-                    }
-                }).addTo(map);
-                
-                viloyatLayers.push(layer);
-            });
-        }
-
-        // Viloyatlar ro'yxatini to'ldirish
-        function loadViloyatlarList() {
-            const select = document.getElementById('regionSelect');
-            regionList.forEach(region => {
-                const option = document.createElement('option');
-                option.value = region;
-                option.textContent = region;
-                select.appendChild(option);
-            });
-
-            select.addEventListener('change', (e) => {
-                if (e.target.value) {
-                    const region = uzbekistanRegions[e.target.value];
-                    if (region) {
-                        map.flyTo(region.center, 8, {
-                            duration: 1.5
-                        });
-                    }
-                }
-            });
-        }
-
-        // O'zbekiston ko'rinishiga o'tish
-        function fitToUzbekistan() {
-            map.fitBounds([
-                [uzbekistanBounds.south, uzbekistanBounds.west],
-                [uzbekistanBounds.north, uzbekistanBounds.east]
-            ], {
-                padding: [50, 50]
-            });
-        }
-
-        function addMarker(region) {
-            if (!region.latitude || !region.longitude) return;
-            
-            const statusColors = {
-                'occupied': { color: '#10B981', icon: '✓' },
-                'in_progress': { color: '#F59E0B', icon: '⟳' },
-                'planned': { color: '#EF4444', icon: '○' }
-            };
-            
-            const status = statusColors[region.status] || statusColors['planned'];
-            
-            // Custom icon yaratish
-            const customIcon = L.divIcon({
-                className: 'custom-marker',
-                html: `<div style="
-                    background-color: ${status.color};
-                    width: 32px;
-                    height: 32px;
-                    border-radius: 50%;
-                    border: 3px solid white;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    color: white;
-                    font-weight: bold;
-                    font-size: 16px;
-                    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-                ">${status.icon}</div>`,
-                iconSize: [32, 32],
-                iconAnchor: [16, 16]
-            });
-            
-            const marker = L.marker([parseFloat(region.latitude), parseFloat(region.longitude)], {
-                icon: customIcon
-            }).addTo(map);
-            
-            marker.bindPopup(`
-                <div style="padding: 8px;">
-                    <strong style="font-size: 16px;">${region.name}</strong><br>
-                    <span style="color: #6B7280; font-size: 14px;">
-                        ${region.shops_count || 0} do'kon<br>
-                        Status: ${region.status === 'occupied' ? 'Egallangan' : 
-                                 region.status === 'in_progress' ? 'Jarayonda' : 'Rejada'}
-                    </span>
+<div class="modal" id="regionModal">
+    <div class="modal-backdrop" onclick="closeRegionModal()"></div>
+    <div class="modal-content">
+        <div class="modal-header"><h3 class="modal-title">Yangi Hudud</h3><button class="modal-close" onclick="closeRegionModal()">×</button></div>
+        <div class="modal-body">
+            <form id="regionForm">
+                <div class="form-group"><label class="form-label">Viloyat/Hudud *</label><select id="regionName" class="form-select" required><option value="">Tanlang</option></select><p class="text-gray" style="font-size:10px;margin-top:4px">Yoki boshqa nom kiriting</p><input type="text" id="regionNameCustom" class="form-input mt-2" placeholder="Boshqa hudud nomi"></div>
+                <div class="grid grid-2">
+                    <div class="form-group"><label class="form-label">Latitude</label><input type="number" step="any" id="regionLatitude" class="form-input"></div>
+                    <div class="form-group"><label class="form-label">Longitude</label><input type="number" step="any" id="regionLongitude" class="form-input"></div>
                 </div>
-            `);
-            
-            markers.push(marker);
-        }
+                <div class="form-group"><label class="form-label">Status</label><select id="regionStatus" class="form-select"><option value="planned">Rejada</option><option value="in_progress">Jarayonda</option><option value="occupied">Egallangan</option></select></div>
+            </form>
+        </div>
+        <div class="modal-footer"><button class="btn btn-outline" onclick="closeRegionModal()">Bekor</button><button class="btn btn-primary" onclick="document.getElementById('regionForm').requestSubmit()">Saqlash</button></div>
+    </div>
+</div>
 
-        function clearMarkers() {
-            markers.forEach(marker => map.removeLayer(marker));
-            markers = [];
-        }
+<script src="/static/js/cache.js"></script>
+<script src="/static/js/api.js"></script>
+<script src="/static/js/nav.js"></script>
+<script src="/static/js/uzbekistan-regions.js"></script>
+<script src="/static/js/uzbekistan-geojson.js"></script>
+<script>
+var map,markers=[],viloyatLayers=[];
 
-        async function loadRegions() {
-            try {
-                const regions = await regionsAPI.getAll();
-                const regionsList = document.getElementById('regionsList');
-                
-                if (regions.length === 0) {
-                    regionsList.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🗺️</div><p class="empty-state-title">Hududlar mavjud emas</p></div>';
-                    return;
-                }
-                
-                regionsList.innerHTML = regions.map(region => {
-                    const statusBadge = region.status === 'occupied' ? 
-                        '<span class="badge badge-success">Egallangan</span>' :
-                        region.status === 'in_progress' ?
-                        '<span class="badge badge-warning">Jarayonda</span>' :
-                        '<span class="badge badge-danger">Rejada</span>';
-                    
-                    return `
-                        <div class="flex justify-between items-center" style="padding:12px 0;border-bottom:1px solid var(--border-light);">
-                            <div>
-                                <strong>${region.name}</strong>
-                                <p class="text-gray" style="font-size:13px;margin-top:2px;">${region.shops_count} do'kon</p>
-                            </div>
-                            <div class="flex items-center gap-3">
-                                ${statusBadge}
-                                <button onclick="deleteRegion(${region.id})" class="btn btn-sm btn-danger">O'chirish</button>
-                            </div>
-                        </div>
-                    `;
-                }).join('');
-                
-                // Update map
-                clearMarkers();
-                const mapData = await regionsAPI.getMapData();
-                mapData.forEach(region => addMarker(region));
-            } catch (error) {
-                console.error('Hududlarni yuklashda xatolik:', error);
-                document.getElementById('regionsList').innerHTML = '<p class="text-danger" style="text-align:center;padding:16px;">Xatolik yuz berdi</p>';
-            }
-        }
+function showRegionModal(){
+    var sel=document.getElementById('regionName');sel.innerHTML='<option value="">Tanlang</option>';
+    regionList.forEach(function(r){var o=document.createElement('option');o.value=r;o.textContent=r;sel.appendChild(o)});
+    sel.onchange=function(){var sr=uzbekistanRegions[sel.value];if(sr){document.getElementById('regionLatitude').value=sr.lat;document.getElementById('regionLongitude').value=sr.lng}};
+    document.getElementById('regionModal').classList.add('active');
+}
+function closeRegionModal(){document.getElementById('regionModal').classList.remove('active')}
 
-        async function deleteRegion(regionId) {
-            if (!confirm('Bu hududni o\'chirishni xohlaysizmi?')) return;
-            
-            try {
-                await regionsAPI.delete(regionId);
-                loadRegions();
-            } catch (error) {
-                alert('O\'chirishda xatolik: ' + error.message);
-            }
-        }
+function initMap(){
+    map=L.map('map',{center:[41.3,66.95],zoom:6,minZoom:5,maxZoom:12,maxBounds:[[uzbekistanBounds.south,uzbekistanBounds.west],[uzbekistanBounds.north,uzbekistanBounds.east]]});
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{attribution:'&copy; OSM &copy; CARTO',maxZoom:19}).addTo(map);
+    addViloyatlar();loadViloyatSelect();
+}
 
-        // Modal funksiyalari
-        function showModal(modalId) {
-            document.getElementById(modalId).classList.add('active');
-            if (modalId === 'regionModal') {
-                const select = document.getElementById('regionName');
-                select.innerHTML = '<option value="">Tanlang...</option>';
-                regionList.forEach(region => {
-                    const option = document.createElement('option');
-                    option.value = region;
-                    option.textContent = region;
-                    select.appendChild(option);
-                });
+function addViloyatlar(){
+    uzbekistanViloyatlari.features.forEach(function(f){
+        var c=viloyatRanglari[f.properties.name]||'#38383a';
+        var l=L.geoJSON(f,{style:{fillColor:c,fillOpacity:.25,color:'#8e8e93',weight:1.5,opacity:.6},
+            onEachFeature:function(feat,layer){
+                layer.bindPopup('<strong>'+feat.properties.name_uz+'</strong>');
+                layer.on({click:function(){var r=uzbekistanRegions[feat.properties.name];if(r)map.flyTo(r.center,8,{duration:1.5})},
+                    mouseover:function(e){e.target.setStyle({fillOpacity:.5,weight:2.5})},mouseout:function(e){e.target.setStyle({fillOpacity:.25,weight:1.5})}});
+            }}).addTo(map);
+        viloyatLayers.push(l);
+    });
+}
 
-                select.addEventListener('change', (e) => {
-                    const selectedRegion = uzbekistanRegions[e.target.value];
-                    if (selectedRegion) {
-                        document.getElementById('regionLatitude').value = selectedRegion.lat;
-                        document.getElementById('regionLongitude').value = selectedRegion.lng;
-                    }
-                });
-            }
-        }
+function loadViloyatSelect(){
+    var sel=document.getElementById('regionSelect');
+    regionList.forEach(function(r){var o=document.createElement('option');o.value=r;o.textContent=r;sel.appendChild(o)});
+    sel.addEventListener('change',function(e){if(e.target.value){var r=uzbekistanRegions[e.target.value];if(r)map.flyTo(r.center,8,{duration:1.5})}});
+}
 
-        document.getElementById('regionForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const selectedRegion = document.getElementById('regionName').value;
-            const customName = document.getElementById('regionNameCustom').value;
-            const regionName = customName || selectedRegion;
-            
-            if (!regionName) {
-                alert('Viloyat nomini tanlang yoki kiriting');
-                return;
-            }
-            
-            let lat = document.getElementById('regionLatitude').value;
-            let lng = document.getElementById('regionLongitude').value;
-            
-            if (!lat || !lng) {
-                const region = uzbekistanRegions[selectedRegion];
-                if (region) {
-                    lat = region.lat;
-                    lng = region.lng;
-                }
-            }
-            
-            const regionData = {
-                name: regionName,
-                latitude: lat || null,
-                longitude: lng || null,
-                status: document.getElementById('regionStatus').value
-            };
-            
-            try {
-                await regionsAPI.create(regionData);
-                hideModal('regionModal');
-                document.getElementById('regionForm').reset();
-                document.getElementById('regionNameCustom').value = '';
-                loadRegions();
-            } catch (error) {
-                alert('Yaratishda xatolik: ' + error.message);
-            }
-        });
+function fitToUzbekistan(){map.fitBounds([[uzbekistanBounds.south,uzbekistanBounds.west],[uzbekistanBounds.north,uzbekistanBounds.east]],{padding:[50,50]})}
 
-        // Initialize
-        initMap();
-        loadRegions();
-    </script>
+function addMarker(r){
+    if(!r.latitude||!r.longitude)return;
+    var sc={'occupied':{c:'#30d158',i:'✓'},'in_progress':{c:'#ff9f0a',i:'⟳'},'planned':{c:'#ff453a',i:'○'}};
+    var s=sc[r.status]||sc['planned'];
+    var icon=L.divIcon({className:'custom-marker',html:'<div style="background:'+s.c+';width:28px;height:28px;border-radius:50%;border:2px solid #fff;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:bold;font-size:14px;box-shadow:0 2px 8px rgba(0,0,0,.4)">'+s.i+'</div>',iconSize:[28,28],iconAnchor:[14,14]});
+    var m=L.marker([parseFloat(r.latitude),parseFloat(r.longitude)],{icon:icon}).addTo(map);
+    m.bindPopup('<div style="padding:6px;color:#1d1d1f"><strong>'+r.name+'</strong><br><small>'+(r.shops_count||0)+" do'kon</small></div>");
+    markers.push(m);
+}
+
+function clearMarkers(){markers.forEach(function(m){map.removeLayer(m)});markers=[]}
+
+async function loadRegions(){
+    try{
+        var r=await regionsAPI.getAll(),rl=document.getElementById('regionsList');
+        if(!r.length){rl.innerHTML='<div class="empty-state"><p class="empty-state-title">Hududlar yo\'q</p></div>';return}
+        rl.innerHTML=r.map(function(x){
+            var b=x.status==='occupied'?'badge-success':x.status==='in_progress'?'badge-warning':'badge-danger';
+            var t=x.status==='occupied'?'Egallangan':x.status==='in_progress'?'Jarayonda':'Rejada';
+            return '<div class="flex justify-between items-center" style="padding:10px 0;border-bottom:1px solid var(--border-light)"><div><strong>'+x.name+'</strong><p class="text-gray" style="font-size:12px;margin-top:2px">'+(x.shops_count||0)+" do'kon</p></div><div class='flex items-center gap-3'><span class='badge "+b+"'>"+t+"</span><button onclick='deleteRegion("+x.id+")' class='btn btn-sm btn-danger'>×</button></div></div>"}).join('');
+        clearMarkers();var md=await regionsAPI.getMapData();md.forEach(addMarker);
+    }catch(e){console.error(e);document.getElementById('regionsList').innerHTML='<p class="text-danger text-center p-4">Xatolik</p>'}
+}
+
+async function deleteRegion(id){if(!confirm("O'chirishni xohlaysizmi?"))return;try{await regionsAPI.delete(id);loadRegions()}catch(e){alert('Xatolik: '+e.message)}}
+
+document.getElementById('regionForm').addEventListener('submit',async function(e){
+    e.preventDefault();
+    var name=document.getElementById('regionNameCustom').value||document.getElementById('regionName').value;
+    if(!name){alert('Nom kiriting');return}
+    var lat=document.getElementById('regionLatitude').value,lng=document.getElementById('regionLongitude').value;
+    if(!lat||!lng){var sr=uzbekistanRegions[document.getElementById('regionName').value];if(sr){lat=sr.lat;lng=sr.lng}}
+    try{await regionsAPI.create({name:name,latitude:lat||null,longitude:lng||null,status:document.getElementById('regionStatus').value});closeRegionModal();this.reset();document.getElementById('regionNameCustom').value='';loadRegions()}catch(e){alert('Xatolik: '+e.message)}
+});
+
+initMap();loadRegions();
+</script>
 </body>
 </html>
-

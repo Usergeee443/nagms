@@ -5,638 +5,272 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Savdo - NGMS</title>
     <link rel="stylesheet" href="/static/css/style.css">
+    <script>if(localStorage.getItem('ngms_sb')==='c')document.documentElement.classList.add('collapsed')</script>
 </head>
 <body>
-    <button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
-    <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
-    <aside class="sidebar" id="sidebar">
-        <div class="sidebar-header"><div class="sidebar-logo">NGMS</div></div>
-        <nav class="sidebar-nav">
-            <a href="/dashboard.html" class="nav-item"><span class="nav-icon">📊</span>Dashboard</a>
-            <a href="/products.html" class="nav-item"><span class="nav-icon">📦</span>Mahsulotlar</a>
-            <a href="/customers.html" class="nav-item"><span class="nav-icon">👥</span>Mijozlar</a>
-            <a href="/sales.html" class="nav-item active"><span class="nav-icon">💰</span>Savdo</a>
-            <a href="/maps.html" class="nav-item"><span class="nav-icon">📍</span>Xaritalar</a>
-            <a href="/ai.html" class="nav-item"><span class="nav-icon">🤖</span>AI Tahlil</a>
-        </nav>
-        <div class="sidebar-footer"><button class="btn btn-danger" style="width:100%" onclick="logout()">Chiqish</button></div>
-    </aside>
 
-    <!-- Main Content -->
-    <main class="main-content">
-        <div class="page-header">
-            <div>
-                <h1 class="page-title">Savdo</h1>
-                <p class="page-subtitle">Savdo ma'lumotlari va tarixiy yozuvlar</p>
+<main class="main-content">
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Savdo</h1>
+            <p class="page-subtitle">Savdo ma'lumotlari</p>
+        </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="grid grid-3 mb-4">
+        <div class="stat-card accent-green"><p class="stat-label">Kunlik</p><p class="stat-value" id="dailySales">-</p></div>
+        <div class="stat-card accent-blue"><p class="stat-label">Oylik</p><p class="stat-value" id="monthlySales">-</p></div>
+        <div class="stat-card accent-purple"><p class="stat-label">O'sish</p><p class="stat-value" id="growthPercent">-</p></div>
+    </div>
+
+    <!-- Ko'p savdo -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h3 class="card-title">Ko'p savdo qo'shish</h3>
+            <button class="btn btn-sm btn-ghost" onclick="toggleBulk()"><span id="bulkTxt">Ko'rsatish</span></button>
+        </div>
+        <div class="card-body" id="bulkBox" style="display:none">
+            <div id="bulkContainer">
+                <div class="bulk-row grid mb-2" style="grid-template-columns:1fr 1fr 70px 100px 100px 120px auto;gap:6px">
+                    <select class="form-select bulk-customer"><option value="">Mijoz</option></select>
+                    <select class="form-select bulk-product"><option value="">Mahsulot</option></select>
+                    <input type="number" class="form-input bulk-quantity" min="1" value="1" placeholder="Miqdor">
+                    <input type="number" class="form-input bulk-unit-price" step="100" placeholder="Narx">
+                    <input type="number" class="form-input bulk-purchase-price" step="100" placeholder="Tan narx">
+                    <input type="date" class="form-input bulk-date">
+                    <button type="button" class="btn btn-sm btn-danger" onclick="removeBulkRow(this)">×</button>
+                </div>
+            </div>
+            <div class="flex gap-2 mt-4">
+                <button class="btn btn-outline btn-sm" onclick="addBulkRow()">+ Qator</button>
+                <button class="btn btn-primary btn-sm" onclick="saveBulkSales()">Saqlash</button>
             </div>
         </div>
+    </div>
 
-        <!-- Statistikalar -->
-        <div class="grid grid-3 mb-6">
-            <div class="stat-card gradient-green">
-                <div class="flex justify-between items-center">
-                    <div>
-                        <p class="stat-label">Kunlik Savdo</p>
-                        <p class="stat-value" id="dailySales">0 so'm</p>
-                    </div>
-                    <span class="stat-icon">📅</span>
-                </div>
-            </div>
-            <div class="stat-card gradient-blue">
-                <div class="flex justify-between items-center">
-                    <div>
-                        <p class="stat-label">Oylik Savdo</p>
-                        <p class="stat-value" id="monthlySales">0 so'm</p>
-                    </div>
-                    <span class="stat-icon">📈</span>
-                </div>
-            </div>
-            <div class="stat-card gradient-purple">
-                <div class="flex justify-between items-center">
-                    <div>
-                        <p class="stat-label">O'sish</p>
-                        <p class="stat-value" id="growthPercent">0%</p>
-                    </div>
-                    <span class="stat-icon">📊</span>
-                </div>
+    <!-- Sales Table -->
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Savdolar</h3>
+            <div class="flex gap-2">
+                <input type="date" id="filterStart" class="form-input" style="width:auto;padding:6px 10px;font-size:12px">
+                <input type="date" id="filterEnd" class="form-input" style="width:auto;padding:6px 10px;font-size:12px">
+                <button class="btn btn-sm btn-secondary" onclick="filterSales()">Filtr</button>
             </div>
         </div>
-
-        <!-- Tez Savdo Qo'shish -->
-        <div class="card mb-6">
-            <div class="card-header">
-                <h3 class="card-title">⚡ Tez Savdo Qo'shish</h3>
-                <small class="text-gray">Mijoz, mahsulot, miqdor va narxni tanlang. Sana avtomatik saqlanadi.</small>
-            </div>
-            <div class="card-body">
-                <form id="quickSaleForm">
-                    <div class="grid grid-3 mb-4">
-                        <div class="form-group" style="margin-bottom: 0;">
-                            <label class="form-label">Mijoz *</label>
-                            <select id="quickCustomer" class="form-select" required>
-                                <option value="">Tanlang...</option>
-                            </select>
-                        </div>
-                        <div class="form-group" style="margin-bottom: 0;">
-                            <label class="form-label">Mahsulot *</label>
-                            <select id="quickProduct" class="form-select" required>
-                                <option value="">Tanlang...</option>
-                            </select>
-                        </div>
-                        <div class="form-group" style="margin-bottom: 0;">
-                            <label class="form-label">Sana *</label>
-                            <input type="date" id="quickDate" class="form-input" required>
-                        </div>
-                    </div>
-                    <div class="grid grid-4 mb-4">
-                        <div class="form-group" style="margin-bottom: 0;">
-                            <label class="form-label">Miqdor *</label>
-                            <input type="number" id="quickQuantity" class="form-input" min="1" value="1" required>
-                        </div>
-                        <div class="form-group" style="margin-bottom: 0;">
-                            <label class="form-label">Dona narxi (so'm) *</label>
-                            <input type="number" id="quickUnitPrice" class="form-input" step="100" required placeholder="5000">
-                            <small class="text-gray" id="productPriceHint"></small>
-                            <small class="text-gray" id="quickTotalHint" style="display:block; margin-top:4px;"></small>
-                        </div>
-                        <div class="form-group" style="margin-bottom: 0;">
-                            <label class="form-label">Oldin tan narxi (ixtiyoriy)</label>
-                            <input type="number" id="quickPurchasePrice" class="form-input" step="100" placeholder="Tan narxi qancha bo'lgan">
-                            <small class="text-gray">Kiritilsa sof foyda aniq hisoblanadi</small>
-                        </div>
-                        <div class="form-group" style="margin-bottom: 0;">
-                            <label class="form-label">&nbsp;</label>
-                            <button type="submit" class="btn btn-primary" style="width: 100%;">
-                                ➕ Qo'shish
-                            </button>
-                        </div>
-                    </div>
-                </form>
+        <div class="card-body" style="padding:0">
+            <div class="table-container">
+                <table class="table">
+                    <thead><tr><th>Sana</th><th>Mijoz</th><th>Mahsulot</th><th>Miqdor</th><th>Narx</th><th>Jami</th><th></th></tr></thead>
+                    <tbody id="salesTable"><tr><td colspan="7" class="text-center p-4"><div class="spinner" style="margin:0 auto"></div></td></tr></tbody>
+                </table>
             </div>
         </div>
+    </div>
+</main>
 
-        <!-- Ko'p Savdo Qo'shish -->
-        <div class="card mb-6">
-            <div class="card-header">
-                <h3 class="card-title">📋 Ko'p Savdo Qo'shish (Tarixiy ma'lumotlar)</h3>
-                <button class="btn btn-sm btn-outline" onclick="toggleBulkForm()">
-                    <span id="bulkToggleText">Ko'rsatish</span>
-                </button>
-            </div>
-            <div class="card-body" id="bulkFormContainer" style="display: none;">
-                <div style="background: #f0f9ff; padding: 16px; border-radius: 12px; margin-bottom: 16px;">
-                    <p class="text-gray" style="font-size: 13px;">
-                        <strong>📝 Qanday foydalanish:</strong><br>
-                        Har bir qatorga bitta savdo ma'lumotini kiriting. Mijoz, mahsulot, miqdor va narxni tanlang.
-                    </p>
-                </div>
-                
-                <div id="bulkSalesContainer">
-                    <div class="bulk-sale-row grid grid-4 mb-2" style="grid-template-columns: 1fr 1fr 70px 100px 100px 120px auto;">
-                        <select class="form-select bulk-customer" required><option value="">Mijoz</option></select>
-                        <select class="form-select bulk-product" required><option value="">Mahsulot</option></select>
-                        <input type="number" class="form-input bulk-quantity" min="1" value="1" placeholder="Miqdor">
-                        <input type="number" class="form-input bulk-unit-price" step="100" placeholder="Dona narxi">
-                        <input type="number" class="form-input bulk-purchase-price" step="100" placeholder="Oldin tan narxi" title="Oldin tan narxi (ixtiyoriy)">
-                        <input type="date" class="form-input bulk-date">
-                        <button type="button" class="btn btn-sm btn-danger" onclick="removeBulkRow(this)">✕</button>
-                    </div>
-                </div>
-                
-                <div class="flex gap-3 mt-4">
-                    <button type="button" class="btn btn-outline" onclick="addBulkRow()">
-                        ➕ Qator qo'shish
-                    </button>
-                    <button type="button" class="btn btn-primary" onclick="saveBulkSales()">
-                        💾 Barchasini saqlash
-                    </button>
-                </div>
-            </div>
+<!-- Desktop FAB -->
+<button class="fab" id="desktopFab" onclick="openQuickSale()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+</button>
+
+<!-- Quick Sale Modal -->
+<div class="modal" id="quickSaleModal">
+    <div class="modal-backdrop" onclick="closeQuickSale()"></div>
+    <div class="modal-content" style="max-width:480px">
+        <div class="modal-header">
+            <h3 class="modal-title">Yangi savdo</h3>
+            <button class="modal-close" onclick="closeQuickSale()">×</button>
         </div>
-
-        <!-- Savdolar Jadvali -->
-        <div class="card">
-            <div class="card-header">
-                <h3 class="card-title">📊 Savdolar Ro'yxati</h3>
-                <div class="flex gap-2">
-                    <input type="date" id="filterStartDate" class="form-input" style="width: auto; padding: 8px 12px;">
-                    <input type="date" id="filterEndDate" class="form-input" style="width: auto; padding: 8px 12px;">
-                    <button class="btn btn-sm btn-secondary" onclick="filterSales()">Filtrlash</button>
+        <div class="modal-body">
+            <form id="quickSaleForm">
+                <div class="grid grid-2">
+                    <div class="form-group"><label class="form-label">Mijoz *</label><select id="qCustomer" class="form-select" required><option value="">Tanlang</option></select></div>
+                    <div class="form-group"><label class="form-label">Mahsulot *</label><select id="qProduct" class="form-select" required><option value="">Tanlang</option></select></div>
                 </div>
-            </div>
-            <div class="card-body" style="padding: 0;">
-                <div class="table-container">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>Sana</th>
-                                <th>Mijoz</th>
-                                <th>Mahsulot</th>
-                                <th>Miqdor</th>
-                                <th>Dona narxi</th>
-                                <th>Jami summa</th>
-                                <th>Amallar</th>
-                            </tr>
-                        </thead>
-                        <tbody id="salesTable">
-                            <tr>
-                                <td colspan="7" class="text-center p-4">
-                                    <div class="spinner" style="margin: 0 auto;"></div>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+                <div class="grid grid-3">
+                    <div class="form-group"><label class="form-label">Miqdor *</label><input type="number" id="qQty" class="form-input" min="1" value="1" required></div>
+                    <div class="form-group"><label class="form-label">Dona narx *</label><input type="number" id="qPrice" class="form-input" step="100" required><p class="text-gray" style="font-size:10px;margin-top:2px" id="qPriceHint"></p></div>
+                    <div class="form-group"><label class="form-label">Sana *</label><input type="date" id="qDate" class="form-input" required></div>
                 </div>
-            </div>
+                <div class="form-group"><label class="form-label">Tan narx (ixtiyoriy)</label><input type="number" id="qPurchase" class="form-input" step="100" placeholder="Sof foyda uchun"></div>
+                <p class="text-gray font-bold mb-4" id="qTotal" style="font-size:13px"></p>
+            </form>
         </div>
-
-        <!-- Tahrirlash modali -->
-        <div id="editSaleModal" class="modal">
-            <div class="modal-backdrop" onclick="closeEditModal()"></div>
-            <div class="modal-content" style="max-width: 480px;">
-                <div class="modal-header">
-                    <h3 class="modal-title">✏️ Savdoni tahrirlash</h3>
-                    <button type="button" class="modal-close" onclick="closeEditModal()">&times;</button>
-                </div>
-                <div class="modal-body">
-                    <form id="editSaleForm">
-                        <input type="hidden" id="editSaleId" value="">
-                        <div class="form-group">
-                            <label class="form-label">Mijoz *</label>
-                            <select id="editCustomer" class="form-select" required></select>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Mahsulot *</label>
-                            <select id="editProduct" class="form-select" required></select>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Sana *</label>
-                            <input type="date" id="editDate" class="form-input" required>
-                        </div>
-                        <div class="grid grid-2">
-                            <div class="form-group">
-                                <label class="form-label">Miqdor *</label>
-                                <input type="number" id="editQuantity" class="form-input" min="1" required>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Dona narxi (so'm) *</label>
-                                <input type="number" id="editUnitPrice" class="form-input" step="100" required>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Oldin tan narxi (ixtiyoriy)</label>
-                            <input type="number" id="editPurchasePrice" class="form-input" step="100" placeholder="Tan narxi qancha bo'lgan">
-                        </div>
-                        <p class="text-gray" style="font-size: 13px; margin-bottom: 16px;"><span id="editTotalHint">Jami: 0 so'm</span></p>
-                        <div class="flex gap-2 justify-end">
-                            <button type="button" class="btn btn-outline" onclick="closeEditModal()">Bekor qilish</button>
-                            <button type="submit" class="btn btn-primary">Saqlash</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline" onclick="closeQuickSale()">Bekor</button>
+            <button class="btn btn-primary" onclick="submitQuickSale()">Saqlash</button>
         </div>
-    </main>
+    </div>
+</div>
 
-    <script src="/static/js/api.js"></script>
-    <script>
-        // Auth check
-        if (!getAuthToken()) {
-            window.location.href = '/login.html';
-        }
+<!-- Edit Sale Modal -->
+<div class="modal" id="editSaleModal">
+    <div class="modal-backdrop" onclick="closeEditModal()"></div>
+    <div class="modal-content" style="max-width:480px">
+        <div class="modal-header">
+            <h3 class="modal-title">Savdoni tahrirlash</h3>
+            <button class="modal-close" onclick="closeEditModal()">×</button>
+        </div>
+        <div class="modal-body">
+            <form id="editSaleForm">
+                <input type="hidden" id="editSaleId">
+                <div class="grid grid-2">
+                    <div class="form-group"><label class="form-label">Mijoz *</label><select id="editCustomer" class="form-select" required></select></div>
+                    <div class="form-group"><label class="form-label">Mahsulot *</label><select id="editProduct" class="form-select" required></select></div>
+                </div>
+                <div class="grid grid-3">
+                    <div class="form-group"><label class="form-label">Miqdor *</label><input type="number" id="editQty" class="form-input" min="1" required></div>
+                    <div class="form-group"><label class="form-label">Dona narx *</label><input type="number" id="editPrice" class="form-input" step="100" required></div>
+                    <div class="form-group"><label class="form-label">Sana *</label><input type="date" id="editDate" class="form-input" required></div>
+                </div>
+                <div class="form-group"><label class="form-label">Tan narx</label><input type="number" id="editPurchase" class="form-input" step="100"></div>
+                <p class="text-gray font-bold" id="editTotal" style="font-size:13px"></p>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline" onclick="closeEditModal()">Bekor</button>
+            <button class="btn btn-primary" onclick="document.getElementById('editSaleForm').requestSubmit()">Saqlash</button>
+        </div>
+    </div>
+</div>
 
-        let customers = [];
-        let products = [];
+<script src="/static/js/cache.js"></script>
+<script src="/static/js/api.js"></script>
+<script src="/static/js/utils.js"></script>
+<script src="/static/js/nav.js"></script>
+<script>
+var customers=[],products=[];
 
-        function logout() {
-            removeAuthToken();
-            window.location.href = '/login.html';
-        }
+/* Quick Sale Modal */
+function openQuickSale(){document.getElementById('quickSaleModal').classList.add('active')}
+function closeQuickSale(){document.getElementById('quickSaleModal').classList.remove('active')}
+function closeEditModal(){document.getElementById('editSaleModal').classList.remove('active')}
 
-        function toggleSidebar() {
-            document.getElementById('sidebar').classList.toggle('open');
-            document.querySelector('.sidebar-overlay').classList.toggle('active');
-        }
+/* Check hash on load */
+if(location.hash==='#add') setTimeout(openQuickSale,300);
 
-        function formatNumber(num) {
-            return new Intl.NumberFormat('uz-UZ').format(num || 0);
-        }
+/* Toggle bulk */
+function toggleBulk(){var b=document.getElementById('bulkBox'),t=document.getElementById('bulkTxt');if(b.style.display==='none'){b.style.display='block';t.textContent='Yashirish'}else{b.style.display='none';t.textContent="Ko'rsatish"}}
 
-        function formatCurrency(num) {
-            return formatNumber(num) + ' so\'m';
-        }
-
-        function formatDate(dateStr) {
-            if (!dateStr) return '-';
-            const date = new Date(dateStr);
-            return date.toLocaleDateString('uz-UZ');
-        }
-
-        function toggleBulkForm() {
-            const container = document.getElementById('bulkFormContainer');
-            const text = document.getElementById('bulkToggleText');
-            if (container.style.display === 'none') {
-                container.style.display = 'block';
-                text.textContent = 'Yashirish';
-            } else {
-                container.style.display = 'none';
-                text.textContent = 'Ko\'rsatish';
-            }
-        }
-
-        async function loadFormData() {
-            try {
-                [customers, products] = await Promise.all([
-                    customersAPI.getAll(),
-                    productsAPI.getAll()
-                ]);
-
-                const customerOptions = '<option value="">Mijoz tanlang...</option>' + 
-                    customers.map(c => `<option value="${c.id}">${c.name}${c.additional_name ? ' (' + c.additional_name + ')' : ''}</option>`).join('');
-                const productOptions = '<option value="">Mahsulot tanlang...</option>' + 
-                    products.map(p => `<option value="${p.id}" data-price="${p.sale_price}">${p.name} (${p.package_type}) - ${formatCurrency(p.sale_price)}</option>`).join('');
-
-                document.getElementById('quickCustomer').innerHTML = customerOptions;
-                document.getElementById('quickProduct').innerHTML = productOptions;
-                
-                // Bulk form selects
-                document.querySelectorAll('.bulk-customer').forEach(el => el.innerHTML = customerOptions);
-                document.querySelectorAll('.bulk-product').forEach(el => el.innerHTML = productOptions);
-
-                // Default date
-                document.getElementById('quickDate').value = new Date().toISOString().split('T')[0];
-                document.querySelectorAll('.bulk-date').forEach(el => {
-                    el.value = new Date().toISOString().split('T')[0];
-                });
-
-                // Product price hint
-                document.getElementById('quickProduct').addEventListener('change', function() {
-                    const selected = this.options[this.selectedIndex];
-                    const price = selected.getAttribute('data-price');
-                    if (price) {
-                        document.getElementById('productPriceHint').textContent = `Belgilangan dona narxi: ${formatCurrency(price)}`;
-                        document.getElementById('quickUnitPrice').value = price;
-                    } else {
-                        document.getElementById('productPriceHint').textContent = '';
-                    }
-                    if (typeof updateQuickTotalHint === 'function') updateQuickTotalHint();
-                });
-            } catch (error) {
-                console.error('Form ma\'lumotlarini yuklashda xatolik:', error);
-            }
-        }
-
-        async function loadStatistics() {
-            try {
-                const stats = await salesAPI.getStatistics('month');
-                document.getElementById('dailySales').textContent = formatCurrency(stats.total_sales / 30);
-                document.getElementById('monthlySales').textContent = formatCurrency(stats.total_sales);
-                document.getElementById('growthPercent').textContent = 
-                    (stats.growth_percent >= 0 ? '+' : '') + stats.growth_percent.toFixed(1) + '%';
-            } catch (error) {
-                console.error('Statistika yuklashda xatolik:', error);
-            }
-        }
-
-        async function loadSales() {
-            try {
-                const sales = await salesAPI.getAll();
-                const tbody = document.getElementById('salesTable');
-                
-                if (sales.length === 0) {
-                    tbody.innerHTML = `
-                        <tr>
-                            <td colspan="7">
-                                <div class="empty-state">
-                                    <div class="empty-state-icon">📊</div>
-                                    <p class="empty-state-title">Savdo ma'lumotlari yo'q</p>
-                                    <p class="text-gray">Yuqoridagi formadan yangi savdo qo'shing</p>
-                                </div>
-                            </td>
-                        </tr>
-                    `;
-                    return;
-                }
-
-                const unitPrice = (sale) => sale.quantity > 0 ? (sale.amount / sale.quantity) : 0;
-                tbody.innerHTML = sales.map(sale => `
-                    <tr>
-                        <td><strong>${formatDate(sale.sale_date)}</strong></td>
-                        <td>${sale.customer_name || '-'}</td>
-                        <td>${sale.product_name || '-'}</td>
-                        <td>${sale.quantity}</td>
-                        <td>${formatCurrency(unitPrice(sale))}</td>
-                        <td><strong>${formatCurrency(sale.amount)}</strong></td>
-                        <td>
-                            <button class="action-btn" onclick="openEditModal(${sale.id})" title="Tahrirlash">✏️</button>
-                            <button class="action-btn delete" onclick="deleteSale(${sale.id})" title="O'chirish">🗑️</button>
-                        </td>
-                    </tr>
-                `).join('');
-            } catch (error) {
-                console.error('Savdolarni yuklashda xatolik:', error);
-            }
-        }
-
-        async function filterSales() {
-            const startDate = document.getElementById('filterStartDate').value;
-            const endDate = document.getElementById('filterEndDate').value;
-            
-            try {
-                const sales = await salesAPI.getAll(startDate, endDate);
-                const tbody = document.getElementById('salesTable');
-                
-                if (sales.length === 0) {
-                    tbody.innerHTML = `
-                        <tr>
-                            <td colspan="7" class="text-center p-4 text-gray">
-                                Bu davr uchun savdo topilmadi
-                            </td>
-                        </tr>
-                    `;
-                    return;
-                }
-
-                const unitPrice = (sale) => sale.quantity > 0 ? (sale.amount / sale.quantity) : 0;
-                tbody.innerHTML = sales.map(sale => `
-                    <tr>
-                        <td><strong>${formatDate(sale.sale_date)}</strong></td>
-                        <td>${sale.customer_name || '-'}</td>
-                        <td>${sale.product_name || '-'}</td>
-                        <td>${sale.quantity}</td>
-                        <td>${formatCurrency(unitPrice(sale))}</td>
-                        <td><strong>${formatCurrency(sale.amount)}</strong></td>
-                        <td>
-                            <button class="action-btn" onclick="openEditModal(${sale.id})" title="Tahrirlash">✏️</button>
-                            <button class="action-btn delete" onclick="deleteSale(${sale.id})" title="O'chirish">🗑️</button>
-                        </td>
-                    </tr>
-                `).join('');
-            } catch (error) {
-                console.error('Filtrlashda xatolik:', error);
-            }
-        }
-
-        // Tez savdo: dona narxi * miqdor = jami summa (API ga jami yuboriladi)
-        function updateQuickTotalHint() {
-            const qty = parseInt(document.getElementById('quickQuantity').value) || 0;
-            const price = parseFloat(document.getElementById('quickUnitPrice').value) || 0;
-            const total = qty * price;
-            const el = document.getElementById('quickTotalHint');
-            el.textContent = total > 0 ? `Jami: ${formatCurrency(total)}` : '';
-        }
-        document.getElementById('quickQuantity').addEventListener('input', updateQuickTotalHint);
-        document.getElementById('quickUnitPrice').addEventListener('input', updateQuickTotalHint);
-
-        document.getElementById('quickSaleForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const quantity = parseInt(document.getElementById('quickQuantity').value) || 1;
-            const unitPrice = parseFloat(document.getElementById('quickUnitPrice').value) || 0;
-            const totalAmount = quantity * unitPrice;
-
-            const saleData = {
-                customer_id: parseInt(document.getElementById('quickCustomer').value),
-                product_id: parseInt(document.getElementById('quickProduct').value),
-                quantity: quantity,
-                amount: totalAmount,
-                sale_date: document.getElementById('quickDate').value
-            };
-            const purchasePrice = parseFloat(document.getElementById('quickPurchasePrice').value);
-            if (!isNaN(purchasePrice) && purchasePrice >= 0) {
-                saleData.purchase_price_at_sale = purchasePrice;
-            }
-
-            try {
-                await salesAPI.create(saleData);
-                showToast('Savdo muvaffaqiyatli qo\'shildi!', 'success');
-                document.getElementById('quickSaleForm').reset();
-                document.getElementById('quickDate').value = new Date().toISOString().split('T')[0];
-                document.getElementById('productPriceHint').textContent = '';
-                document.getElementById('quickTotalHint').textContent = '';
-                loadSales();
-                loadStatistics();
-            } catch (error) {
-                showToast('Xatolik: ' + error.message, 'error');
-            }
+/* Load form data */
+async function loadFormData(){
+    try{
+        var r=await Promise.all([customersAPI.getAll(),productsAPI.getAll()]);
+        customers=r[0];products=r[1];
+        var co='<option value="">Mijoz tanlang</option>'+customers.map(function(c){return '<option value="'+c.id+'">'+c.name+(c.additional_name?' ('+c.additional_name+')':'')+'</option>'}).join('');
+        var po='<option value="">Mahsulot tanlang</option>'+products.map(function(p){return '<option value="'+p.id+'" data-price="'+p.sale_price+'">'+p.name+' ('+p.package_type+') – '+fmtC(p.sale_price)+'</option>'}).join('');
+        document.getElementById('qCustomer').innerHTML=co;
+        document.getElementById('qProduct').innerHTML=po;
+        document.querySelectorAll('.bulk-customer').forEach(function(e){e.innerHTML=co});
+        document.querySelectorAll('.bulk-product').forEach(function(e){e.innerHTML=po});
+        document.getElementById('qDate').value=new Date().toISOString().split('T')[0];
+        document.querySelectorAll('.bulk-date').forEach(function(e){e.value=new Date().toISOString().split('T')[0]});
+        document.getElementById('qProduct').addEventListener('change',function(){
+            var s=this.options[this.selectedIndex],p=s.getAttribute('data-price');
+            if(p){document.getElementById('qPriceHint').textContent='Narx: '+fmtC(p);document.getElementById('qPrice').value=p}
+            else document.getElementById('qPriceHint').textContent='';
+            updateQTotal();
         });
+    }catch(e){console.error(e)}
+}
 
-        function addBulkRow() {
-            const container = document.getElementById('bulkSalesContainer');
-            const customerOptions = '<option value="">Mijoz</option>' + 
-                customers.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
-            const productOptions = '<option value="">Mahsulot</option>' + 
-                products.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
-            
-            const row = document.createElement('div');
-            row.className = 'bulk-sale-row grid grid-4 mb-2';
-            row.style.gridTemplateColumns = '1fr 1fr 70px 100px 100px 120px auto';
-            row.innerHTML = `
-                <select class="form-select bulk-customer" required>${customerOptions}</select>
-                <select class="form-select bulk-product" required>${productOptions}</select>
-                <input type="number" class="form-input bulk-quantity" min="1" value="1" placeholder="Miqdor">
-                <input type="number" class="form-input bulk-unit-price" step="100" placeholder="Dona narxi">
-                <input type="number" class="form-input bulk-purchase-price" step="100" placeholder="Oldin tan narxi" title="Oldin tan narxi (ixtiyoriy)">
-                <input type="date" class="form-input bulk-date" value="${new Date().toISOString().split('T')[0]}">
-                <button type="button" class="btn btn-sm btn-danger" onclick="removeBulkRow(this)">✕</button>
-            `;
-            container.appendChild(row);
-        }
+/* Total hints */
+function updateQTotal(){var q=parseInt(document.getElementById('qQty').value)||0,p=parseFloat(document.getElementById('qPrice').value)||0;document.getElementById('qTotal').textContent=q*p>0?'Jami: '+fmtC(q*p):''}
+document.getElementById('qQty').addEventListener('input',updateQTotal);
+document.getElementById('qPrice').addEventListener('input',updateQTotal);
+function updateEditTotal(){var q=parseInt(document.getElementById('editQty').value)||0,p=parseFloat(document.getElementById('editPrice').value)||0;document.getElementById('editTotal').textContent=q*p>0?'Jami: '+fmtC(q*p):''}
+document.getElementById('editQty').addEventListener('input',updateEditTotal);
+document.getElementById('editPrice').addEventListener('input',updateEditTotal);
 
-        function removeBulkRow(btn) {
-            const rows = document.querySelectorAll('.bulk-sale-row');
-            if (rows.length > 1) {
-                btn.closest('.bulk-sale-row').remove();
-            }
-        }
+/* Submit quick sale */
+async function submitQuickSale(){
+    var qty=parseInt(document.getElementById('qQty').value)||1,up=parseFloat(document.getElementById('qPrice').value)||0;
+    var data={customer_id:parseInt(document.getElementById('qCustomer').value),product_id:parseInt(document.getElementById('qProduct').value),quantity:qty,amount:qty*up,sale_date:document.getElementById('qDate').value};
+    var pp=parseFloat(document.getElementById('qPurchase').value);if(!isNaN(pp)&&pp>=0) data.purchase_price_at_sale=pp;
+    try{await salesAPI.create(data);showToast("Savdo qo'shildi",'success');closeQuickSale();document.getElementById('quickSaleForm').reset();document.getElementById('qDate').value=new Date().toISOString().split('T')[0];document.getElementById('qTotal').textContent='';loadSales();loadStats()}catch(e){showToast('Xatolik: '+e.message,'error')}
+}
 
-        async function saveBulkSales() {
-            const rows = document.querySelectorAll('.bulk-sale-row');
-            const salesArray = [];
+/* Stats */
+async function loadStats(){
+    try{var s=await salesAPI.getStatistics('month');document.getElementById('dailySales').textContent=fmtC(s.total_sales/30);document.getElementById('monthlySales').textContent=fmtC(s.total_sales);document.getElementById('growthPercent').textContent=(s.growth_percent>=0?'+':'')+s.growth_percent.toFixed(1)+'%'}catch(e){console.error(e)}
+}
 
-            rows.forEach(row => {
-                const customerId = row.querySelector('.bulk-customer').value;
-                const productId = row.querySelector('.bulk-product').value;
-                const quantity = parseInt(row.querySelector('.bulk-quantity').value) || 1;
-                const unitPrice = parseFloat(row.querySelector('.bulk-unit-price').value) || 0;
-                const purchasePriceEl = row.querySelector('.bulk-purchase-price');
-                const purchasePrice = purchasePriceEl && purchasePriceEl.value ? parseFloat(purchasePriceEl.value) : null;
-                const date = row.querySelector('.bulk-date').value;
+/* Sales list */
+async function loadSales(start,end){
+    try{
+        var sales=await salesAPI.getAll(start,end),tbody=document.getElementById('salesTable');
+        if(!sales.length){tbody.innerHTML='<tr><td colspan="7"><div class="empty-state"><p class="empty-state-title">Savdo yo\'q</p></div></td></tr>';return}
+        var up=function(s){return s.quantity>0?(s.amount/s.quantity):0};
+        tbody.innerHTML=sales.map(function(s){return '<tr><td><strong>'+fmtD(s.sale_date)+'</strong></td><td>'+(s.customer_name||'-')+'</td><td>'+(s.product_name||'-')+'</td><td>'+s.quantity+'</td><td>'+fmtC(up(s))+'</td><td><strong>'+fmtC(s.amount)+'</strong></td><td><button class="action-btn" onclick="openEdit('+s.id+')">✏️</button> <button class="action-btn" onclick="delSale('+s.id+')">🗑</button></td></tr>'}).join('');
+    }catch(e){console.error(e)}
+}
 
-                if (customerId && productId && unitPrice > 0) {
-                    const item = {
-                        customer_id: parseInt(customerId),
-                        product_id: parseInt(productId),
-                        quantity: quantity,
-                        amount: quantity * unitPrice,
-                        sale_date: date || new Date().toISOString().split('T')[0]
-                    };
-                    if (purchasePrice != null && !isNaN(purchasePrice) && purchasePrice >= 0) {
-                        item.purchase_price_at_sale = purchasePrice;
-                    }
-                    salesArray.push(item);
-                }
-            });
+function filterSales(){loadSales(document.getElementById('filterStart').value,document.getElementById('filterEnd').value)}
 
-            if (salesArray.length === 0) {
-                showToast('Kamida bitta to\'liq qator kiriting!', 'error');
-                return;
-            }
+/* Edit */
+async function openEdit(id){
+    if(!customers.length)return;
+    try{
+        var s=await salesAPI.getOne(id);
+        document.getElementById('editSaleId').value=s.id;
+        document.getElementById('editDate').value=s.sale_date||'';
+        document.getElementById('editQty').value=s.quantity||1;
+        document.getElementById('editPrice').value=s.quantity>0?(s.amount/s.quantity):0;
+        document.getElementById('editPurchase').value=s.purchase_price_at_sale!=null?s.purchase_price_at_sale:'';
+        document.getElementById('editCustomer').innerHTML='<option value="">Tanlang</option>'+customers.map(function(c){return '<option value="'+c.id+'"'+(c.id===s.customer_id?' selected':'')+'>'+c.name+'</option>'}).join('');
+        document.getElementById('editProduct').innerHTML='<option value="">Tanlang</option>'+products.map(function(p){return '<option value="'+p.id+'"'+(p.id===s.product_id?' selected':'')+'>'+p.name+'</option>'}).join('');
+        updateEditTotal();
+        document.getElementById('editSaleModal').classList.add('active');
+    }catch(e){showToast('Xatolik: '+e.message,'error')}
+}
 
-            try {
-                const result = await salesAPI.bulkImport(salesArray);
-                showToast(result.message || `${result.created_count} ta savdo qo'shildi`, 'success');
-                
-                if (result.errors && result.errors.length > 0) {
-                    console.warn('Xatoliklar:', result.errors);
-                }
-                
-                loadSales();
-                loadStatistics();
-            } catch (error) {
-                showToast('Xatolik: ' + error.message, 'error');
-            }
-        }
-
-        async function deleteSale(id) {
-            if (!confirm('Bu savdoni o\'chirishni xohlaysizmi?')) return;
-            
-            try {
-                await salesAPI.delete(id);
-                showToast('Savdo o\'chirildi', 'success');
-                loadSales();
-                loadStatistics();
-            } catch (error) {
-                showToast('Xatolik: ' + error.message, 'error');
-            }
-        }
-
-        // Tahrirlash modali
-        function closeEditModal() {
-            document.getElementById('editSaleModal').classList.remove('active');
-        }
-
-        function updateEditTotalHint() {
-            const qty = parseInt(document.getElementById('editQuantity').value) || 0;
-            const price = parseFloat(document.getElementById('editUnitPrice').value) || 0;
-            const total = qty * price;
-            document.getElementById('editTotalHint').textContent = total > 0 ? `Jami: ${formatCurrency(total)}` : 'Jami: 0 so\'m';
-        }
-
-        async function openEditModal(saleId) {
-            if (!customers.length || !products.length) {
-                showToast('Mijoz va mahsulotlar ro\'yxati yuklanishini kuting', 'error');
-                return;
-            }
-            try {
-                const sale = await salesAPI.getOne(saleId);
-                document.getElementById('editSaleId').value = sale.id;
-                document.getElementById('editDate').value = sale.sale_date || '';
-                document.getElementById('editQuantity').value = sale.quantity || 1;
-                const unitPrice = sale.quantity > 0 ? (sale.amount / sale.quantity) : 0;
-                document.getElementById('editUnitPrice').value = unitPrice;
-                document.getElementById('editPurchasePrice').value = (sale.purchase_price_at_sale != null && sale.purchase_price_at_sale !== '') ? sale.purchase_price_at_sale : '';
-
-                const customerOptions = customers.map(c => 
-                    `<option value="${c.id}" ${c.id === sale.customer_id ? 'selected' : ''}>${c.name}${c.additional_name ? ' (' + c.additional_name + ')' : ''}</option>`
-                ).join('');
-                const productOptions = products.map(p => 
-                    `<option value="${p.id}" ${p.id === sale.product_id ? 'selected' : ''}>${p.name} (${p.package_type})</option>`
-                ).join('');
-                document.getElementById('editCustomer').innerHTML = '<option value="">Tanlang...</option>' + customerOptions;
-                document.getElementById('editProduct').innerHTML = '<option value="">Tanlang...</option>' + productOptions;
-
-                updateEditTotalHint();
-                document.getElementById('editSaleModal').classList.add('active');
-            } catch (error) {
-                showToast('Savdoni yuklashda xatolik: ' + error.message, 'error');
-            }
-        }
-
-        document.getElementById('editQuantity').addEventListener('input', updateEditTotalHint);
-        document.getElementById('editUnitPrice').addEventListener('input', updateEditTotalHint);
-
-        document.getElementById('editSaleForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const saleId = document.getElementById('editSaleId').value;
-            const quantity = parseInt(document.getElementById('editQuantity').value) || 1;
-            const unitPrice = parseFloat(document.getElementById('editUnitPrice').value) || 0;
-            const totalAmount = quantity * unitPrice;
-
-            const data = {
-                customer_id: parseInt(document.getElementById('editCustomer').value),
-                product_id: parseInt(document.getElementById('editProduct').value),
-                quantity: quantity,
-                amount: totalAmount,
-                sale_date: document.getElementById('editDate').value
-            };
-            const editPurchasePrice = parseFloat(document.getElementById('editPurchasePrice').value);
-            if (!isNaN(editPurchasePrice) && editPurchasePrice >= 0) {
-                data.purchase_price_at_sale = editPurchasePrice;
-            }
-
-            try {
-                await salesAPI.update(saleId, data);
-                showToast('Savdo saqlandi', 'success');
-                closeEditModal();
-                loadSales();
-                loadStatistics();
-            } catch (error) {
-                showToast('Xatolik: ' + error.message, 'error');
-            }
-        });
-
-        function showToast(message, type = 'info') {
-            const toast = document.createElement('div');
-            toast.className = `toast toast-${type}`;
-            toast.textContent = message;
-            document.body.appendChild(toast);
-            setTimeout(() => toast.remove(), 3000);
-        }
-
-        // Initialize
-        loadFormData();
+document.getElementById('editSaleForm').addEventListener('submit',async function(e){
+    e.preventDefault();
+    var id=document.getElementById('editSaleId').value;
+    var qty=parseInt(document.getElementById('editQty').value)||1;
+    var up=parseFloat(document.getElementById('editPrice').value)||0;
+    var ppVal=document.getElementById('editPurchase').value;
+    var pp=ppVal===''||ppVal===null?null:parseFloat(ppVal);
+    var data={
+        customer_id:parseInt(document.getElementById('editCustomer').value),
+        product_id:parseInt(document.getElementById('editProduct').value),
+        quantity:qty,
+        amount:qty*up,
+        sale_date:document.getElementById('editDate').value,
+        purchase_price_at_sale:(pp!==null&&!isNaN(pp)&&pp>=0)?pp:null
+    };
+    try{
+        await salesAPI.update(id,data);
+        showToast('Saqlandi','success');
+        closeEditModal();
         loadSales();
-        loadStatistics();
-    </script>
+        loadStats();
+    }catch(e){showToast('Xatolik: '+e.message,'error')}
+});
+
+async function delSale(id){if(!confirm("O'chirishni xohlaysizmi?"))return;try{await salesAPI.delete(id);showToast("O'chirildi",'success');loadSales();loadStats()}catch(e){showToast('Xatolik: '+e.message,'error')}}
+
+/* Bulk */
+function addBulkRow(){
+    var co='<option value="">Mijoz</option>'+customers.map(function(c){return '<option value="'+c.id+'">'+c.name+'</option>'}).join('');
+    var po='<option value="">Mahsulot</option>'+products.map(function(p){return '<option value="'+p.id+'">'+p.name+'</option>'}).join('');
+    var r=document.createElement('div');r.className='bulk-row grid mb-2';r.style.gridTemplateColumns='1fr 1fr 70px 100px 100px 120px auto';r.style.gap='6px';
+    r.innerHTML='<select class="form-select bulk-customer">'+co+'</select><select class="form-select bulk-product">'+po+'</select><input type="number" class="form-input bulk-quantity" min="1" value="1"><input type="number" class="form-input bulk-unit-price" step="100" placeholder="Narx"><input type="number" class="form-input bulk-purchase-price" step="100" placeholder="Tan narx"><input type="date" class="form-input bulk-date" value="'+new Date().toISOString().split('T')[0]+'"><button type="button" class="btn btn-sm btn-danger" onclick="removeBulkRow(this)">×</button>';
+    document.getElementById('bulkContainer').appendChild(r);
+}
+function removeBulkRow(b){if(document.querySelectorAll('.bulk-row').length>1)b.closest('.bulk-row').remove()}
+async function saveBulkSales(){
+    var rows=document.querySelectorAll('.bulk-row'),arr=[];
+    rows.forEach(function(r){var cid=r.querySelector('.bulk-customer').value,pid=r.querySelector('.bulk-product').value,qty=parseInt(r.querySelector('.bulk-quantity').value)||1,up=parseFloat(r.querySelector('.bulk-unit-price').value)||0,pp=r.querySelector('.bulk-purchase-price'),ppv=pp&&pp.value?parseFloat(pp.value):null,dt=r.querySelector('.bulk-date').value;
+        if(cid&&pid&&up>0){var it={customer_id:parseInt(cid),product_id:parseInt(pid),quantity:qty,amount:qty*up,sale_date:dt||new Date().toISOString().split('T')[0]};if(ppv!=null&&!isNaN(ppv)&&ppv>=0)it.purchase_price_at_sale=ppv;arr.push(it)}});
+    if(!arr.length){showToast("Kamida bitta qator to'ldiring",'error');return}
+    try{var r=await salesAPI.bulkImport(arr);showToast(r.message||r.created_count+" ta qo'shildi",'success');loadSales();loadStats()}catch(e){showToast('Xatolik: '+e.message,'error')}
+}
+
+/* Init */
+loadFormData();loadSales();loadStats();
+</script>
 </body>
 </html>

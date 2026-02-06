@@ -78,6 +78,12 @@ python run.py
 
 Ilova `http://localhost:5000` da ishga tushadi.
 
+## Render'ga deploy
+
+Loyiha Render'da ishga tushirish uchun tayyor. Batafsil qadamlar: **[DEPLOY.md](DEPLOY.md)**.
+
+Qisqacha: Render da **PostgreSQL** va **Web Service** yarating, `DATABASE_URL` va `JWT_SECRET_KEY` ni sozlang, **Start Command** da `gunicorn run:app --bind 0.0.0.0:$PORT --workers 1 --threads 2` ishlating. Deploy dan keyin Shell orqali `python create_admin.py admin Parolingiz` bajarib admin yarating.
+
 ## Foydalanish
 
 ### Birinchi admin foydalanuvchi yaratish

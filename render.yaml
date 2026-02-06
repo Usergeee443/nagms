@@ -1,0 +1,23 @@
+# Render Blueprint — NGMS Web Service
+# https://render.com/docs/blueprint-spec
+# Render Dashboard da PostgreSQL yarating va DATABASE_URL ni ulang.
+
+services:
+  - type: web
+    name: ngms
+    runtime: python
+    region: singapore
+
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn run:app --bind 0.0.0.0:$PORT --workers 1 --threads 2
+
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: JWT_SECRET_KEY
+        generateValue: true
+      - key: OPENAI_API_KEY
+        sync: false
+      # DATABASE_URL: Render Dashboard > PostgreSQL > Connect > Internal URL ni qo'ying
+      - key: DATABASE_URL
+        sync: false

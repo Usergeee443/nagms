@@ -5,172 +5,54 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Tahlil - NGMS</title>
     <link rel="stylesheet" href="/static/css/style.css">
+    <script>if(localStorage.getItem('ngms_sb')==='c')document.documentElement.classList.add('collapsed')</script>
 </head>
 <body>
-    <button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
-    <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
-    <aside class="sidebar" id="sidebar">
-        <div class="sidebar-header"><div class="sidebar-logo">NGMS</div></div>
-        <nav class="sidebar-nav">
-            <a href="/dashboard.html" class="nav-item"><span class="nav-icon">📊</span>Dashboard</a>
-            <a href="/products.html" class="nav-item"><span class="nav-icon">📦</span>Mahsulotlar</a>
-            <a href="/customers.html" class="nav-item"><span class="nav-icon">👥</span>Mijozlar</a>
-            <a href="/sales.html" class="nav-item"><span class="nav-icon">💰</span>Savdo</a>
-            <a href="/maps.html" class="nav-item"><span class="nav-icon">📍</span>Xaritalar</a>
-            <a href="/ai.html" class="nav-item active"><span class="nav-icon">🤖</span>AI Tahlil</a>
-        </nav>
-        <div class="sidebar-footer"><button class="btn btn-danger" style="width:100%" onclick="logout()">Chiqish</button></div>
-    </aside>
 
-    <!-- Main Content -->
-    <main class="main-content">
-        <div class="page-header">
-            <div>
-                <h1 class="page-title">AI Tahlil</h1>
-                <p class="page-subtitle">Sun'iy intellekt yordamida biznes tahlili</p>
-            </div>
-        </div>
+<main class="main-content">
+    <div class="page-header"><div><h1 class="page-title">AI Tahlil</h1><p class="page-subtitle">Sun'iy intellekt bilan biznes tahlili</p></div></div>
 
-        <!-- AI Savol -->
-        <div class="card mb-6">
-            <div class="card-header">
-                <h3 class="card-title">💬 AI ga Savol Bering</h3>
-            </div>
-            <div class="card-body">
-                <form id="questionForm">
-                    <div class="form-group">
-                        <label class="form-label">Savolingizni yozing</label>
-                        <textarea id="questionInput" class="form-input" rows="3" 
-                            placeholder="Masalan: Qaysi mahsulotlar eng ko'p foyda keltirmoqda? Qaysi hududlarga kengayish kerak?"></textarea>
-                    </div>
-                    <button type="submit" class="btn btn-primary" id="askBtn">
-                        🤖 AI dan so'rash
-                    </button>
-                </form>
-                <div id="answerContainer" class="mt-4" style="display: none;">
-                    <div style="background: linear-gradient(135deg, #f0fdf4, #dcfce7); padding: 20px; border-radius: 12px;">
-                        <h4 style="margin-bottom: 12px; color: #166534;">🤖 AI Javobi:</h4>
-                        <p id="aiAnswer" style="white-space: pre-line; line-height: 1.8;"></p>
-                    </div>
+    <div class="card mb-4">
+        <div class="card-header"><h3 class="card-title">AI ga savol bering</h3></div>
+        <div class="card-body">
+            <form id="questionForm">
+                <div class="form-group"><label class="form-label">Savolingiz</label><textarea id="questionInput" class="form-input" rows="3" placeholder="Masalan: Qaysi mahsulotlar eng ko'p foyda keltirmoqda?"></textarea></div>
+                <button type="submit" class="btn btn-primary" id="askBtn">So'rash</button>
+            </form>
+            <div id="answerBox" class="mt-4" style="display:none">
+                <div style="background:var(--accent-dim);padding:16px;border-radius:var(--radius);border-left:3px solid var(--accent)">
+                    <p id="aiAnswer" style="white-space:pre-line;line-height:1.7;font-size:13px;color:var(--text-secondary)"></p>
                 </div>
             </div>
         </div>
+    </div>
 
-        <!-- Tez Tahlillar -->
-        <div class="grid grid-2 mb-6">
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">📊 Tavsiyalar</h3>
-                </div>
-                <div class="card-body" id="recommendationsContainer">
-                    <div class="spinner" style="margin: 0 auto;"></div>
-                </div>
-            </div>
-            
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">⚠️ Xavflar</h3>
-                </div>
-                <div class="card-body" id="risksContainer">
-                    <div class="spinner" style="margin: 0 auto;"></div>
-                </div>
-            </div>
-        </div>
+    <div class="grid grid-2 mb-4">
+        <div class="card"><div class="card-header"><h3 class="card-title">Tavsiyalar</h3></div><div class="card-body" id="recsBox"><div class="spinner" style="margin:0 auto"></div></div></div>
+        <div class="card"><div class="card-header"><h3 class="card-title">Xavflar</h3></div><div class="card-body" id="risksBox"><div class="spinner" style="margin:0 auto"></div></div></div>
+    </div>
 
-        <!-- Hisobot -->
-        <div class="card">
-            <div class="card-header">
-                <h3 class="card-title">📈 Biznes Hisoboti</h3>
-                <button class="btn btn-sm btn-secondary" onclick="generateReport()">
-                    🔄 Yangilash
-                </button>
-            </div>
-            <div class="card-body" id="reportContainer">
-                <div class="spinner" style="margin: 0 auto;"></div>
-            </div>
-        </div>
-    </main>
+    <div class="card">
+        <div class="card-header"><h3 class="card-title">Biznes hisoboti</h3><button class="btn btn-sm btn-ghost" onclick="genReport()">Yangilash</button></div>
+        <div class="card-body" id="reportBox"><div class="spinner" style="margin:0 auto"></div></div>
+    </div>
+</main>
 
-    <script src="/static/js/api.js"></script>
-    <script>
-        // Auth check
-        if (!getAuthToken()) {
-            window.location.href = '/login.html';
-        }
-
-        function logout() {
-            removeAuthToken();
-            window.location.href = '/login.html';
-        }
-
-        function toggleSidebar() {
-            document.getElementById('sidebar').classList.toggle('open');
-            document.querySelector('.sidebar-overlay').classList.toggle('active');
-        }
-
-        // Savol berish
-        document.getElementById('questionForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const question = document.getElementById('questionInput').value.trim();
-            if (!question) return;
-            
-            const btn = document.getElementById('askBtn');
-            btn.textContent = 'Kutilmoqda...';
-            btn.disabled = true;
-            
-            try {
-                const response = await aiAPI.askQuestion(question);
-                document.getElementById('aiAnswer').textContent = response.answer;
-                document.getElementById('answerContainer').style.display = 'block';
-            } catch (error) {
-                document.getElementById('aiAnswer').textContent = 'Xatolik yuz berdi: ' + error.message;
-                document.getElementById('answerContainer').style.display = 'block';
-            } finally {
-                btn.textContent = '🤖 AI dan so\'rash';
-                btn.disabled = false;
-            }
-        });
-
-        async function loadRecommendations() {
-            try {
-                const response = await aiAPI.getRecommendations();
-                document.getElementById('recommendationsContainer').innerHTML = 
-                    `<p style="white-space: pre-line; line-height: 1.8;">${response.recommendations}</p>`;
-            } catch (error) {
-                document.getElementById('recommendationsContainer').innerHTML = 
-                    '<p class="text-gray">AI tavsiyalari mavjud emas. OpenAI API key sozlang.</p>';
-            }
-        }
-
-        async function loadRisks() {
-            try {
-                const response = await aiAPI.getRisks();
-                document.getElementById('risksContainer').innerHTML = 
-                    `<p style="white-space: pre-line; line-height: 1.8;">${response.risks}</p>`;
-            } catch (error) {
-                document.getElementById('risksContainer').innerHTML = 
-                    '<p class="text-gray">Xavflar tahlili mavjud emas. OpenAI API key sozlang.</p>';
-            }
-        }
-
-        async function generateReport() {
-            document.getElementById('reportContainer').innerHTML = '<div class="spinner" style="margin: 0 auto;"></div>';
-            
-            try {
-                const response = await aiAPI.generateReport();
-                document.getElementById('reportContainer').innerHTML = 
-                    `<p style="white-space: pre-line; line-height: 1.8;">${response.report}</p>`;
-            } catch (error) {
-                document.getElementById('reportContainer').innerHTML = 
-                    '<p class="text-gray">Hisobot yaratishda xatolik. OpenAI API key sozlang.</p>';
-            }
-        }
-
-        // Initialize
-        loadRecommendations();
-        loadRisks();
-        generateReport();
-    </script>
+<script src="/static/js/cache.js"></script>
+<script src="/static/js/api.js"></script>
+<script src="/static/js/nav.js"></script>
+<script>
+document.getElementById('questionForm').addEventListener('submit',async function(e){
+    e.preventDefault();var q=document.getElementById('questionInput').value.trim();if(!q)return;
+    var b=document.getElementById('askBtn');b.textContent='Kutilmoqda...';b.disabled=true;
+    try{var r=await aiAPI.askQuestion(q);document.getElementById('aiAnswer').textContent=r.answer;document.getElementById('answerBox').style.display='block'}
+    catch(e){document.getElementById('aiAnswer').textContent='Xatolik: '+e.message;document.getElementById('answerBox').style.display='block'}
+    finally{b.textContent="So'rash";b.disabled=false}
+});
+async function loadRecs(){try{var r=await aiAPI.getRecommendations();document.getElementById('recsBox').innerHTML='<p style="white-space:pre-line;line-height:1.7;font-size:13px;color:var(--text-secondary)">'+r.recommendations+'</p>'}catch(e){document.getElementById('recsBox').innerHTML='<p class="text-gray" style="font-size:13px">Mavjud emas</p>'}}
+async function loadRisks(){try{var r=await aiAPI.getRisks();document.getElementById('risksBox').innerHTML='<p style="white-space:pre-line;line-height:1.7;font-size:13px;color:var(--text-secondary)">'+r.risks+'</p>'}catch(e){document.getElementById('risksBox').innerHTML='<p class="text-gray" style="font-size:13px">Mavjud emas</p>'}}
+async function genReport(){document.getElementById('reportBox').innerHTML='<div class="spinner" style="margin:0 auto"></div>';try{var r=await aiAPI.generateReport();document.getElementById('reportBox').innerHTML='<p style="white-space:pre-line;line-height:1.7;font-size:13px;color:var(--text-secondary)">'+r.report+'</p>'}catch(e){document.getElementById('reportBox').innerHTML='<p class="text-gray" style="font-size:13px">Xatolik</p>'}}
+loadRecs();loadRisks();genReport();
+</script>
 </body>
 </html>

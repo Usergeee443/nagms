@@ -5,344 +5,100 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hududlar - NGMS</title>
     <link rel="stylesheet" href="/static/css/style.css">
+    <script>if(localStorage.getItem('ngms_sb')==='c')document.documentElement.classList.add('collapsed')</script>
 </head>
 <body>
-    <button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
-    <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
-    <aside class="sidebar" id="sidebar">
-        <div class="sidebar-header"><div class="sidebar-logo">NGMS</div></div>
-        <nav class="sidebar-nav">
-            <a href="/dashboard.html" class="nav-item"><span class="nav-icon">📊</span>Dashboard</a>
-            <a href="/products.html" class="nav-item"><span class="nav-icon">📦</span>Mahsulotlar</a>
-            <a href="/customers.html" class="nav-item"><span class="nav-icon">👥</span>Mijozlar</a>
-            <a href="/sales.html" class="nav-item"><span class="nav-icon">💰</span>Savdo</a>
-            <a href="/maps.html" class="nav-item"><span class="nav-icon">📍</span>Xaritalar</a>
-            <a href="/regions.html" class="nav-item active"><span class="nav-icon">🗺️</span>Hududlar</a>
-            <a href="/shops.html" class="nav-item"><span class="nav-icon">🏪</span>Do'konlar</a>
-            <a href="/ai.html" class="nav-item"><span class="nav-icon">🤖</span>AI Tahlil</a>
-        </nav>
-        <div class="sidebar-footer"><button class="btn btn-danger" style="width:100%" onclick="logout()">Chiqish</button></div>
-    </aside>
 
-    <!-- Main Content -->
-    <main class="main-content">
-        <div class="page-header">
-            <div>
-                <h1 class="page-title">Hududlar</h1>
-                <p class="page-subtitle">Viloyat, tuman va qishloqlar</p>
-            </div>
-            <button class="btn btn-primary" onclick="showModal()">
-                ➕ Yangi Hudud
-            </button>
-        </div>
+<main class="main-content">
+    <div class="page-header">
+        <div><h1 class="page-title">Hududlar</h1><p class="page-subtitle">Viloyat, tuman va qishloqlar</p></div>
+        <button class="btn btn-primary btn-sm" onclick="showModal()">+ Yangi</button>
+    </div>
 
-        <!-- Statistikalar -->
-        <div class="grid grid-3 mb-6">
-            <div class="stat-card gradient-green">
-                <div class="flex justify-between items-center">
-                    <div>
-                        <p class="stat-label">Jami Hududlar</p>
-                        <p class="stat-value" id="totalRegions">0</p>
-                    </div>
-                    <span class="stat-icon">🗺️</span>
+    <div class="grid grid-3 mb-4">
+        <div class="stat-card accent-green"><p class="stat-label">Jami</p><p class="stat-value" id="totalRegions">0</p></div>
+        <div class="stat-card accent-blue"><p class="stat-label">Egallangan</p><p class="stat-value" id="occupiedRegions">0</p></div>
+        <div class="stat-card accent-purple"><p class="stat-label">Rejalashtirilgan</p><p class="stat-value" id="plannedRegions">0</p></div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header"><h3 class="card-title">Tez qo'shish</h3></div>
+        <div class="card-body">
+            <form id="quickRegionForm">
+                <div class="grid grid-4 mb-3">
+                    <div class="form-group" style="margin:0"><label class="form-label">Nomi *</label><input type="text" id="quickName" class="form-input" required placeholder="Nomi"></div>
+                    <div class="form-group" style="margin:0"><label class="form-label">Latitude</label><input type="number" step="0.0001" id="quickLatitude" class="form-input" placeholder="39.65"></div>
+                    <div class="form-group" style="margin:0"><label class="form-label">Longitude</label><input type="number" step="0.0001" id="quickLongitude" class="form-input" placeholder="66.96"></div>
+                    <div class="form-group" style="margin:0"><label class="form-label">Status</label><select id="quickStatus" class="form-select"><option value="planned">Rejalashtirilgan</option><option value="occupied">Egallangan</option></select></div>
                 </div>
-            </div>
-            <div class="stat-card gradient-blue">
-                <div class="flex justify-between items-center">
-                    <div>
-                        <p class="stat-label">Egallangan</p>
-                        <p class="stat-value" id="occupiedRegions">0</p>
-                    </div>
-                    <span class="stat-icon">✅</span>
-                </div>
-            </div>
-            <div class="stat-card gradient-purple">
-                <div class="flex justify-between items-center">
-                    <div>
-                        <p class="stat-label">Rejalashtirilgan</p>
-                        <p class="stat-value" id="plannedRegions">0</p>
-                    </div>
-                    <span class="stat-icon">📋</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Tez Qo'shish -->
-        <div class="card mb-6">
-            <div class="card-header">
-                <h3 class="card-title">⚡ Tez Hudud Qo'shish</h3>
-            </div>
-            <div class="card-body">
-                <form id="quickRegionForm">
-                    <div class="grid grid-4">
-                        <div class="form-group" style="margin-bottom: 0;">
-                            <label class="form-label">Nomi *</label>
-                            <input type="text" id="quickName" class="form-input" required placeholder="Tuman/Qishloq nomi">
-                        </div>
-                        <div class="form-group" style="margin-bottom: 0;">
-                            <label class="form-label">Latitude</label>
-                            <input type="number" step="0.0001" id="quickLatitude" class="form-input" placeholder="39.6547">
-                        </div>
-                        <div class="form-group" style="margin-bottom: 0;">
-                            <label class="form-label">Longitude</label>
-                            <input type="number" step="0.0001" id="quickLongitude" class="form-input" placeholder="66.9597">
-                        </div>
-                        <div class="form-group" style="margin-bottom: 0;">
-                            <label class="form-label">Status</label>
-                            <select id="quickStatus" class="form-select">
-                                <option value="planned">Rejalashtirilgan</option>
-                                <option value="occupied">Egallangan</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="mt-4">
-                        <button type="submit" class="btn btn-primary">
-                            ➕ Qo'shish
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-        <!-- Hududlar Jadvali -->
-        <div class="card">
-            <div class="card-header">
-                <h3 class="card-title">🗺️ Hududlar Ro'yxati</h3>
-                <span class="badge badge-info" id="regionCount">0 ta</span>
-            </div>
-            <div class="card-body" style="padding: 0;">
-                <div class="table-container">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>Nomi</th>
-                                <th>Koordinatalar</th>
-                                <th>Do'konlar</th>
-                                <th>Status</th>
-                                <th>Amallar</th>
-                            </tr>
-                        </thead>
-                        <tbody id="regionsTable">
-                            <tr>
-                                <td colspan="5" class="text-center p-4">
-                                    <div class="spinner" style="margin: 0 auto;"></div>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </main>
-
-    <!-- Modal -->
-    <div class="modal" id="regionModal">
-        <div class="modal-backdrop" onclick="hideModal()"></div>
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 class="modal-title" id="modalTitle">Yangi Hudud</h3>
-                <button class="modal-close" onclick="hideModal()">×</button>
-            </div>
-            <div class="modal-body">
-                <form id="regionForm">
-                    <input type="hidden" id="regionId">
-                    <div class="form-group">
-                        <label class="form-label">Nomi *</label>
-                        <input type="text" id="regionName" class="form-input" required>
-                    </div>
-                    <div class="grid grid-2">
-                        <div class="form-group">
-                            <label class="form-label">Latitude</label>
-                            <input type="number" step="0.0001" id="regionLatitude" class="form-input">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Longitude</label>
-                            <input type="number" step="0.0001" id="regionLongitude" class="form-input">
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Status</label>
-                        <select id="regionStatus" class="form-select">
-                            <option value="planned">Rejalashtirilgan</option>
-                            <option value="occupied">Egallangan</option>
-                        </select>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-outline" onclick="hideModal()">Bekor qilish</button>
-                <button class="btn btn-primary" onclick="saveRegion()">Saqlash</button>
-            </div>
+                <button type="submit" class="btn btn-primary btn-sm">+ Qo'shish</button>
+            </form>
         </div>
     </div>
 
-    <script src="/static/js/api.js"></script>
-    <script>
-        // Auth check
-        if (!getAuthToken()) {
-            window.location.href = '/login.html';
-        }
+    <div class="card">
+        <div class="card-header"><h3 class="card-title">Hududlar</h3><span class="badge badge-info" id="regionCount">0</span></div>
+        <div class="card-body" style="padding:0">
+            <div class="table-container">
+                <table class="table">
+                    <thead><tr><th>Nomi</th><th>Koordinatalar</th><th>Do'konlar</th><th>Status</th><th></th></tr></thead>
+                    <tbody id="regionsTable"><tr><td colspan="5" class="text-center p-4"><div class="spinner" style="margin:0 auto"></div></td></tr></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</main>
 
-        let editingId = null;
+<div class="modal" id="regionModal">
+    <div class="modal-backdrop" onclick="hideModal()"></div>
+    <div class="modal-content">
+        <div class="modal-header"><h3 class="modal-title" id="modalTitle">Yangi Hudud</h3><button class="modal-close" onclick="hideModal()">×</button></div>
+        <div class="modal-body">
+            <form id="regionForm">
+                <input type="hidden" id="regionId">
+                <div class="form-group"><label class="form-label">Nomi *</label><input type="text" id="regionName" class="form-input" required></div>
+                <div class="grid grid-2">
+                    <div class="form-group"><label class="form-label">Latitude</label><input type="number" step="0.0001" id="regionLatitude" class="form-input"></div>
+                    <div class="form-group"><label class="form-label">Longitude</label><input type="number" step="0.0001" id="regionLongitude" class="form-input"></div>
+                </div>
+                <div class="form-group"><label class="form-label">Status</label><select id="regionStatus" class="form-select"><option value="planned">Rejalashtirilgan</option><option value="occupied">Egallangan</option></select></div>
+            </form>
+        </div>
+        <div class="modal-footer"><button class="btn btn-outline" onclick="hideModal()">Bekor</button><button class="btn btn-primary" onclick="saveRegion()">Saqlash</button></div>
+    </div>
+</div>
 
-        function logout() {
-            removeAuthToken();
-            window.location.href = '/login.html';
-        }
-
-        function toggleSidebar() {
-            document.getElementById('sidebar').classList.toggle('open');
-            document.querySelector('.sidebar-overlay').classList.toggle('active');
-        }
-
-        function showModal(region = null) {
-            editingId = region ? region.id : null;
-            document.getElementById('modalTitle').textContent = region ? 'Hududni tahrirlash' : 'Yangi Hudud';
-            
-            if (region) {
-                document.getElementById('regionId').value = region.id;
-                document.getElementById('regionName').value = region.name;
-                document.getElementById('regionLatitude').value = region.latitude || '';
-                document.getElementById('regionLongitude').value = region.longitude || '';
-                document.getElementById('regionStatus').value = region.status;
-            } else {
-                document.getElementById('regionForm').reset();
-            }
-            
-            document.getElementById('regionModal').classList.add('active');
-        }
-
-        function hideModal() {
-            document.getElementById('regionModal').classList.remove('active');
-            editingId = null;
-        }
-
-        async function loadRegions() {
-            try {
-                const regions = await regionsAPI.getAll();
-                document.getElementById('regionCount').textContent = regions.length + ' ta';
-                document.getElementById('totalRegions').textContent = regions.length;
-                document.getElementById('occupiedRegions').textContent = regions.filter(r => r.status === 'occupied').length;
-                document.getElementById('plannedRegions').textContent = regions.filter(r => r.status === 'planned').length;
-                
-                const tbody = document.getElementById('regionsTable');
-                
-                if (regions.length === 0) {
-                    tbody.innerHTML = `
-                        <tr>
-                            <td colspan="5">
-                                <div class="empty-state">
-                                    <div class="empty-state-icon">🗺️</div>
-                                    <p class="empty-state-title">Hududlar yo'q</p>
-                                    <p class="text-gray">Yuqoridagi formadan yangi hudud qo'shing</p>
-                                </div>
-                            </td>
-                        </tr>
-                    `;
-                    return;
-                }
-
-                tbody.innerHTML = regions.map(region => `
-                    <tr>
-                        <td><strong>${region.name}</strong></td>
-                        <td class="text-gray">
-                            ${region.latitude && region.longitude 
-                                ? `${region.latitude.toFixed(4)}, ${region.longitude.toFixed(4)}` 
-                                : '-'}
-                        </td>
-                        <td>
-                            <span class="badge badge-info">${region.shops_count || 0} ta</span>
-                        </td>
-                        <td>
-                            <span class="badge ${region.status === 'occupied' ? 'badge-success' : 'badge-warning'}">
-                                ${region.status === 'occupied' ? 'Egallangan' : 'Rejalashtirilgan'}
-                            </span>
-                        </td>
-                        <td>
-                            <button class="action-btn edit" onclick='editRegion(${JSON.stringify(region)})' title="Tahrirlash">
-                                ✏️
-                            </button>
-                            <button class="action-btn delete" onclick="deleteRegion(${region.id})" title="O'chirish">
-                                🗑️
-                            </button>
-                        </td>
-                    </tr>
-                `).join('');
-            } catch (error) {
-                console.error('Hududlarni yuklashda xatolik:', error);
-            }
-        }
-
-        function editRegion(region) {
-            showModal(region);
-        }
-
-        async function saveRegion() {
-            const regionData = {
-                name: document.getElementById('regionName').value,
-                latitude: document.getElementById('regionLatitude').value ? parseFloat(document.getElementById('regionLatitude').value) : null,
-                longitude: document.getElementById('regionLongitude').value ? parseFloat(document.getElementById('regionLongitude').value) : null,
-                status: document.getElementById('regionStatus').value
-            };
-
-            try {
-                if (editingId) {
-                    await regionsAPI.update(editingId, regionData);
-                    showToast('Hudud yangilandi!', 'success');
-                } else {
-                    await regionsAPI.create(regionData);
-                    showToast('Hudud qo\'shildi!', 'success');
-                }
-                hideModal();
-                loadRegions();
-            } catch (error) {
-                showToast('Xatolik: ' + error.message, 'error');
-            }
-        }
-
-        // Quick form
-        document.getElementById('quickRegionForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const regionData = {
-                name: document.getElementById('quickName').value,
-                latitude: document.getElementById('quickLatitude').value ? parseFloat(document.getElementById('quickLatitude').value) : null,
-                longitude: document.getElementById('quickLongitude').value ? parseFloat(document.getElementById('quickLongitude').value) : null,
-                status: document.getElementById('quickStatus').value
-            };
-
-            try {
-                await regionsAPI.create(regionData);
-                showToast('Hudud qo\'shildi!', 'success');
-                document.getElementById('quickRegionForm').reset();
-                loadRegions();
-            } catch (error) {
-                showToast('Xatolik: ' + error.message, 'error');
-            }
-        });
-
-        async function deleteRegion(id) {
-            if (!confirm('Bu hududni o\'chirishni xohlaysizmi?')) return;
-            
-            try {
-                await regionsAPI.delete(id);
-                showToast('Hudud o\'chirildi', 'success');
-                loadRegions();
-            } catch (error) {
-                showToast('Xatolik: ' + error.message, 'error');
-            }
-        }
-
-        function showToast(message, type = 'info') {
-            const toast = document.createElement('div');
-            toast.className = `toast toast-${type}`;
-            toast.textContent = message;
-            document.body.appendChild(toast);
-            setTimeout(() => toast.remove(), 3000);
-        }
-
-        // Initialize
-        loadRegions();
-    </script>
+<script src="/static/js/cache.js"></script>
+<script src="/static/js/api.js"></script>
+<script src="/static/js/utils.js"></script>
+<script src="/static/js/nav.js"></script>
+<script>
+var editingId=null;
+function showModal(r){
+    editingId=r?r.id:null;document.getElementById('modalTitle').textContent=r?'Tahrirlash':'Yangi Hudud';
+    if(r){document.getElementById('regionId').value=r.id;document.getElementById('regionName').value=r.name;document.getElementById('regionLatitude').value=r.latitude||'';document.getElementById('regionLongitude').value=r.longitude||'';document.getElementById('regionStatus').value=r.status}
+    else document.getElementById('regionForm').reset();
+    document.getElementById('regionModal').classList.add('active');
+}
+function hideModal(){document.getElementById('regionModal').classList.remove('active');editingId=null}
+async function loadRegions(){
+    try{
+        var r=await regionsAPI.getAll();document.getElementById('regionCount').textContent=r.length+' ta';document.getElementById('totalRegions').textContent=r.length;document.getElementById('occupiedRegions').textContent=r.filter(function(x){return x.status==='occupied'}).length;document.getElementById('plannedRegions').textContent=r.filter(function(x){return x.status==='planned'}).length;
+        var tb=document.getElementById('regionsTable');
+        if(!r.length){tb.innerHTML='<tr><td colspan="5"><div class="empty-state"><p class="empty-state-title">Hudud yo\'q</p></div></td></tr>';return}
+        tb.innerHTML=r.map(function(x){return '<tr><td><strong>'+x.name+'</strong></td><td class="text-gray">'+(x.latitude&&x.longitude?x.latitude.toFixed(4)+', '+x.longitude.toFixed(4):'-')+'</td><td><span class="badge badge-info">'+(x.shops_count||0)+' ta</span></td><td><span class="badge '+(x.status==='occupied'?'badge-success':'badge-warning')+'">'+(x.status==='occupied'?'Egallangan':'Reja')+'</span></td><td><button class="action-btn" onclick=\'showModal('+JSON.stringify(x)+')\'>✏️</button> <button class="action-btn" onclick="deleteRegion('+x.id+')">🗑</button></td></tr>'}).join('');
+    }catch(e){console.error(e)}
+}
+async function saveRegion(){
+    var d={name:document.getElementById('regionName').value,latitude:document.getElementById('regionLatitude').value?parseFloat(document.getElementById('regionLatitude').value):null,longitude:document.getElementById('regionLongitude').value?parseFloat(document.getElementById('regionLongitude').value):null,status:document.getElementById('regionStatus').value};
+    try{if(editingId)await regionsAPI.update(editingId,d),showToast('Yangilandi','success');else await regionsAPI.create(d),showToast("Qo'shildi",'success');hideModal();loadRegions()}catch(e){showToast('Xatolik: '+e.message,'error')}
+}
+document.getElementById('quickRegionForm').addEventListener('submit',async function(e){
+    e.preventDefault();var d={name:document.getElementById('quickName').value,latitude:document.getElementById('quickLatitude').value?parseFloat(document.getElementById('quickLatitude').value):null,longitude:document.getElementById('quickLongitude').value?parseFloat(document.getElementById('quickLongitude').value):null,status:document.getElementById('quickStatus').value};
+    try{await regionsAPI.create(d);showToast("Qo'shildi",'success');this.reset();loadRegions()}catch(e){showToast('Xatolik: '+e.message,'error')}
+});
+async function deleteRegion(id){if(!confirm("O'chirishni xohlaysizmi?"))return;try{await regionsAPI.delete(id);showToast("O'chirildi",'success');loadRegions()}catch(e){showToast('Xatolik: '+e.message,'error')}}
+loadRegions();
+</script>
 </body>
 </html>

@@ -6,7 +6,7 @@
     <title>NGMS - Nur & Garden Management System</title>
     <script>
         // Redirect to dashboard or login
-        const token = localStorage.getItem('ngms_token');
+        const token = localStorage.getItem('authToken');
         if (token) {
             window.location.href = '/dashboard.html';
         } else {

@@ -5,328 +5,102 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mijozlar - NGMS</title>
     <link rel="stylesheet" href="/static/css/style.css">
+    <script>if(localStorage.getItem('ngms_sb')==='c')document.documentElement.classList.add('collapsed')</script>
 </head>
 <body>
-    <button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
-    <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
-    <aside class="sidebar" id="sidebar">
-        <div class="sidebar-header"><div class="sidebar-logo">NGMS</div></div>
-        <nav class="sidebar-nav">
-            <a href="/dashboard.html" class="nav-item"><span class="nav-icon">📊</span>Dashboard</a>
-            <a href="/products.html" class="nav-item"><span class="nav-icon">📦</span>Mahsulotlar</a>
-            <a href="/customers.html" class="nav-item active"><span class="nav-icon">👥</span>Mijozlar</a>
-            <a href="/sales.html" class="nav-item"><span class="nav-icon">💰</span>Savdo</a>
-            <a href="/maps.html" class="nav-item"><span class="nav-icon">📍</span>Xaritalar</a>
-            <a href="/ai.html" class="nav-item"><span class="nav-icon">🤖</span>AI Tahlil</a>
-        </nav>
-        <div class="sidebar-footer"><button class="btn btn-danger" style="width:100%" onclick="logout()">Chiqish</button></div>
-    </aside>
 
-    <!-- Main Content -->
-    <main class="main-content">
-        <div class="page-header">
-            <div>
-                <h1 class="page-title">Mijozlar</h1>
-                <p class="page-subtitle">Barcha mijozlar ro'yxati</p>
-            </div>
-            <button class="btn btn-primary" onclick="showModal()">
-                ➕ Yangi Mijoz
-            </button>
-        </div>
+<main class="main-content">
+    <div class="page-header">
+        <div><h1 class="page-title">Mijozlar</h1><p class="page-subtitle">Barcha mijozlar</p></div>
+        <button class="btn btn-primary btn-sm" onclick="showModal()">+ Yangi</button>
+    </div>
 
-        <!-- Statistikalar -->
-        <div class="grid grid-2 mb-6">
-            <div class="stat-card gradient-green">
-                <div class="flex justify-between items-center">
-                    <div>
-                        <p class="stat-label">Jami Mijozlar</p>
-                        <p class="stat-value" id="totalCustomers">0</p>
-                    </div>
-                    <span class="stat-icon">👥</span>
+    <div class="grid grid-2 mb-4">
+        <div class="stat-card accent-green"><p class="stat-label">Jami</p><p class="stat-value" id="totalCustomers">0</p></div>
+        <div class="stat-card accent-blue"><p class="stat-label">Xaritada</p><p class="stat-value" id="mappedCustomers">0</p></div>
+    </div>
+
+    <!-- Tez qo'shish -->
+    <div class="card mb-4">
+        <div class="card-header"><h3 class="card-title">Tez qo'shish</h3></div>
+        <div class="card-body">
+            <form id="quickCustomerForm">
+                <div class="grid grid-4 mb-3">
+                    <div class="form-group" style="margin:0"><label class="form-label">Ismi *</label><input type="text" id="quickName" class="form-input" required placeholder="Mijoz ismi"></div>
+                    <div class="form-group" style="margin:0"><label class="form-label">Qo'shimcha</label><input type="text" id="quickAdditionalName" class="form-input" placeholder="Ixtiyoriy"></div>
+                    <div class="form-group" style="margin:0"><label class="form-label">Telefon</label><input type="tel" id="quickPhone" class="form-input" placeholder="+998"></div>
+                    <div class="form-group" style="margin:0"><label class="form-label">Manzil</label><input type="text" id="quickAddress" class="form-input" placeholder="Manzil"></div>
                 </div>
-            </div>
-            <div class="stat-card gradient-blue">
-                <div class="flex justify-between items-center">
-                    <div>
-                        <p class="stat-label">Xaritada</p>
-                        <p class="stat-value" id="mappedCustomers">0</p>
-                    </div>
-                    <span class="stat-icon">📍</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Tez Qo'shish -->
-        <div class="card mb-6">
-            <div class="card-header">
-                <h3 class="card-title">⚡ Tez Mijoz Qo'shish</h3>
-            </div>
-            <div class="card-body">
-                <form id="quickCustomerForm">
-                    <div class="grid grid-4 mb-4">
-                        <div class="form-group" style="margin-bottom: 0;">
-                            <label class="form-label">Ismi *</label>
-                            <input type="text" id="quickName" class="form-input" required placeholder="Mijoz ismi">
-                        </div>
-                        <div class="form-group" style="margin-bottom: 0;">
-                            <label class="form-label">Qo'shimcha nomi</label>
-                            <input type="text" id="quickAdditionalName" class="form-input" placeholder="Ixtiyoriy">
-                        </div>
-                        <div class="form-group" style="margin-bottom: 0;">
-                            <label class="form-label">Telefon raqam</label>
-                            <input type="tel" id="quickPhone" class="form-input" placeholder="+998 90 123 45 67">
-                        </div>
-                        <div class="form-group" style="margin-bottom: 0;">
-                            <label class="form-label">Manzil</label>
-                            <input type="text" id="quickAddress" class="form-input" placeholder="Manzil">
-                        </div>
-                    </div>
-                    <div class="mt-4">
-                        <button type="submit" class="btn btn-primary">
-                            ➕ Qo'shish
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-        <!-- Mijozlar Jadvali -->
-        <div class="card">
-            <div class="card-header">
-                <h3 class="card-title">👥 Mijozlar Ro'yxati</h3>
-                <span class="badge badge-info" id="customerCount">0 ta</span>
-            </div>
-            <div class="card-body" style="padding: 0;">
-                <div class="table-container">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>Ismi</th>
-                                <th>Qo'shimcha nomi</th>
-                                <th>Telefon</th>
-                                <th>Manzil</th>
-                                <th>Amallar</th>
-                            </tr>
-                        </thead>
-                        <tbody id="customersTable">
-                            <tr>
-                                <td colspan="5" class="text-center p-4">
-                                    <div class="spinner" style="margin: 0 auto;"></div>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </main>
-
-    <!-- Modal -->
-    <div class="modal" id="customerModal">
-        <div class="modal-backdrop" onclick="hideModal()"></div>
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 class="modal-title" id="modalTitle">Yangi Mijoz</h3>
-                <button class="modal-close" onclick="hideModal()">×</button>
-            </div>
-            <div class="modal-body">
-                <form id="customerForm">
-                    <input type="hidden" id="customerId">
-                    <div class="form-group">
-                        <label class="form-label">Ismi *</label>
-                        <input type="text" id="customerName" class="form-input" required>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Qo'shimcha nomi</label>
-                        <input type="text" id="customerAdditionalName" class="form-input" placeholder="Ixtiyoriy">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Telefon raqam</label>
-                        <input type="tel" id="customerPhone" class="form-input">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Manzil</label>
-                        <textarea id="customerAddress" class="form-input" rows="2"></textarea>
-                    </div>
-                    <div class="grid grid-2">
-                        <div class="form-group">
-                            <label class="form-label">Latitude (Xarita uchun)</label>
-                            <input type="number" step="0.0000001" id="customerLatitude" class="form-input" placeholder="39.6547">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Longitude (Xarita uchun)</label>
-                            <input type="number" step="0.0000001" id="customerLongitude" class="form-input" placeholder="66.9597">
-                        </div>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-outline" onclick="hideModal()">Bekor qilish</button>
-                <button class="btn btn-primary" onclick="saveCustomer()">Saqlash</button>
-            </div>
+                <button type="submit" class="btn btn-primary btn-sm">+ Qo'shish</button>
+            </form>
         </div>
     </div>
 
-    <script src="/static/js/api.js"></script>
-    <script>
-        // Auth check
-        if (!getAuthToken()) {
-            window.location.href = '/login.html';
-        }
+    <div class="card">
+        <div class="card-header"><h3 class="card-title">Mijozlar</h3><span class="badge badge-info" id="customerCount">0</span></div>
+        <div class="card-body" style="padding:0">
+            <div class="table-container">
+                <table class="table">
+                    <thead><tr><th>Ismi</th><th>Qo'shimcha</th><th>Telefon</th><th>Manzil</th><th></th></tr></thead>
+                    <tbody id="customersTable"><tr><td colspan="5" class="text-center p-4"><div class="spinner" style="margin:0 auto"></div></td></tr></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</main>
 
-        let editingId = null;
+<div class="modal" id="customerModal">
+    <div class="modal-backdrop" onclick="hideModal()"></div>
+    <div class="modal-content">
+        <div class="modal-header"><h3 class="modal-title" id="modalTitle">Yangi Mijoz</h3><button class="modal-close" onclick="hideModal()">×</button></div>
+        <div class="modal-body">
+            <form id="customerForm">
+                <input type="hidden" id="customerId">
+                <div class="form-group"><label class="form-label">Ismi *</label><input type="text" id="customerName" class="form-input" required></div>
+                <div class="form-group"><label class="form-label">Qo'shimcha nomi</label><input type="text" id="customerAdditionalName" class="form-input"></div>
+                <div class="form-group"><label class="form-label">Telefon</label><input type="tel" id="customerPhone" class="form-input"></div>
+                <div class="form-group"><label class="form-label">Manzil</label><textarea id="customerAddress" class="form-input" rows="2"></textarea></div>
+                <div class="grid grid-2">
+                    <div class="form-group"><label class="form-label">Latitude</label><input type="number" step="0.0000001" id="customerLatitude" class="form-input"></div>
+                    <div class="form-group"><label class="form-label">Longitude</label><input type="number" step="0.0000001" id="customerLongitude" class="form-input"></div>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer"><button class="btn btn-outline" onclick="hideModal()">Bekor</button><button class="btn btn-primary" onclick="saveCustomer()">Saqlash</button></div>
+    </div>
+</div>
 
-        function logout() {
-            removeAuthToken();
-            window.location.href = '/login.html';
-        }
-
-        function toggleSidebar() {
-            document.getElementById('sidebar').classList.toggle('open');
-            document.querySelector('.sidebar-overlay').classList.toggle('active');
-        }
-
-        function showModal(customer = null) {
-            editingId = customer ? customer.id : null;
-            document.getElementById('modalTitle').textContent = customer ? 'Mijozni tahrirlash' : 'Yangi Mijoz';
-            
-            if (customer) {
-                document.getElementById('customerId').value = customer.id;
-                document.getElementById('customerName').value = customer.name;
-                document.getElementById('customerAdditionalName').value = customer.additional_name || '';
-                document.getElementById('customerPhone').value = customer.phone || '';
-                document.getElementById('customerAddress').value = customer.address || '';
-                document.getElementById('customerLatitude').value = customer.latitude || '';
-                document.getElementById('customerLongitude').value = customer.longitude || '';
-            } else {
-                document.getElementById('customerForm').reset();
-            }
-            
-            document.getElementById('customerModal').classList.add('active');
-        }
-
-        function hideModal() {
-            document.getElementById('customerModal').classList.remove('active');
-            editingId = null;
-        }
-
-        async function loadCustomers() {
-            try {
-                const customers = await customersAPI.getAll();
-                document.getElementById('customerCount').textContent = customers.length + ' ta';
-                document.getElementById('totalCustomers').textContent = customers.length;
-                document.getElementById('mappedCustomers').textContent = customers.filter(c => c.latitude && c.longitude).length;
-                
-                const tbody = document.getElementById('customersTable');
-                
-                if (customers.length === 0) {
-                    tbody.innerHTML = `
-                        <tr>
-                            <td colspan="5">
-                                <div class="empty-state">
-                                    <div class="empty-state-icon">👥</div>
-                                    <p class="empty-state-title">Mijozlar yo'q</p>
-                                    <p class="text-gray">Yuqoridagi formadan yangi mijoz qo'shing</p>
-                                </div>
-                            </td>
-                        </tr>
-                    `;
-                    return;
-                }
-
-                tbody.innerHTML = customers.map(customer => `
-                    <tr>
-                        <td><strong>${customer.name}</strong></td>
-                        <td>${customer.additional_name || '-'}</td>
-                        <td>${customer.phone || '-'}</td>
-                        <td>${customer.address || '-'}</td>
-                        <td>
-                            <button class="action-btn edit" onclick='editCustomer(${JSON.stringify(customer)})' title="Tahrirlash">
-                                ✏️
-                            </button>
-                            <button class="action-btn delete" onclick="deleteCustomer(${customer.id})" title="O'chirish">
-                                🗑️
-                            </button>
-                        </td>
-                    </tr>
-                `).join('');
-            } catch (error) {
-                console.error('Mijozlarni yuklashda xatolik:', error);
-            }
-        }
-
-        function editCustomer(customer) {
-            showModal(customer);
-        }
-
-        async function saveCustomer() {
-            const customerData = {
-                name: document.getElementById('customerName').value,
-                additional_name: document.getElementById('customerAdditionalName').value || null,
-                phone: document.getElementById('customerPhone').value || null,
-                address: document.getElementById('customerAddress').value || null,
-                latitude: document.getElementById('customerLatitude').value ? parseFloat(document.getElementById('customerLatitude').value) : null,
-                longitude: document.getElementById('customerLongitude').value ? parseFloat(document.getElementById('customerLongitude').value) : null
-            };
-
-            try {
-                if (editingId) {
-                    await customersAPI.update(editingId, customerData);
-                    showToast('Mijoz yangilandi!', 'success');
-                } else {
-                    await customersAPI.create(customerData);
-                    showToast('Mijoz qo\'shildi!', 'success');
-                }
-                hideModal();
-                loadCustomers();
-            } catch (error) {
-                showToast('Xatolik: ' + error.message, 'error');
-            }
-        }
-
-        // Quick form
-        document.getElementById('quickCustomerForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const customerData = {
-                name: document.getElementById('quickName').value,
-                additional_name: document.getElementById('quickAdditionalName').value || null,
-                phone: document.getElementById('quickPhone').value || null,
-                address: document.getElementById('quickAddress').value || null
-            };
-
-            try {
-                await customersAPI.create(customerData);
-                showToast('Mijoz qo\'shildi!', 'success');
-                document.getElementById('quickCustomerForm').reset();
-                loadCustomers();
-            } catch (error) {
-                showToast('Xatolik: ' + error.message, 'error');
-            }
-        });
-
-        async function deleteCustomer(id) {
-            if (!confirm('Bu mijozni o\'chirishni xohlaysizmi?')) return;
-            
-            try {
-                await customersAPI.delete(id);
-                showToast('Mijoz o\'chirildi', 'success');
-                loadCustomers();
-            } catch (error) {
-                showToast('Xatolik: ' + error.message, 'error');
-            }
-        }
-
-        function showToast(message, type = 'info') {
-            const toast = document.createElement('div');
-            toast.className = `toast toast-${type}`;
-            toast.textContent = message;
-            document.body.appendChild(toast);
-            setTimeout(() => toast.remove(), 3000);
-        }
-
-        // Initialize
-        loadCustomers();
-    </script>
+<script src="/static/js/cache.js"></script>
+<script src="/static/js/api.js"></script>
+<script src="/static/js/utils.js"></script>
+<script src="/static/js/nav.js"></script>
+<script>
+var editingId=null;
+function showModal(c){
+    editingId=c?c.id:null;document.getElementById('modalTitle').textContent=c?'Tahrirlash':'Yangi Mijoz';
+    if(c){document.getElementById('customerId').value=c.id;document.getElementById('customerName').value=c.name;document.getElementById('customerAdditionalName').value=c.additional_name||'';document.getElementById('customerPhone').value=c.phone||'';document.getElementById('customerAddress').value=c.address||'';document.getElementById('customerLatitude').value=c.latitude||'';document.getElementById('customerLongitude').value=c.longitude||''}
+    else document.getElementById('customerForm').reset();
+    document.getElementById('customerModal').classList.add('active');
+}
+function hideModal(){document.getElementById('customerModal').classList.remove('active');editingId=null}
+async function loadCustomers(){
+    try{
+        var c=await customersAPI.getAll();document.getElementById('customerCount').textContent=c.length+' ta';document.getElementById('totalCustomers').textContent=c.length;document.getElementById('mappedCustomers').textContent=c.filter(function(x){return x.latitude&&x.longitude}).length;
+        var tb=document.getElementById('customersTable');
+        if(!c.length){tb.innerHTML='<tr><td colspan="5"><div class="empty-state"><p class="empty-state-title">Mijoz yo\'q</p></div></td></tr>';return}
+        tb.innerHTML=c.map(function(x){return '<tr><td><strong>'+x.name+'</strong></td><td>'+(x.additional_name||'-')+'</td><td>'+(x.phone||'-')+'</td><td>'+(x.address||'-')+'</td><td><button class="action-btn" onclick=\'showModal('+JSON.stringify(x)+')\'>✏️</button> <button class="action-btn" onclick="deleteCustomer('+x.id+')">🗑</button></td></tr>'}).join('');
+    }catch(e){console.error(e)}
+}
+async function saveCustomer(){
+    var d={name:document.getElementById('customerName').value,additional_name:document.getElementById('customerAdditionalName').value||null,phone:document.getElementById('customerPhone').value||null,address:document.getElementById('customerAddress').value||null,latitude:document.getElementById('customerLatitude').value?parseFloat(document.getElementById('customerLatitude').value):null,longitude:document.getElementById('customerLongitude').value?parseFloat(document.getElementById('customerLongitude').value):null};
+    try{if(editingId)await customersAPI.update(editingId,d),showToast('Yangilandi','success');else await customersAPI.create(d),showToast("Qo'shildi",'success');hideModal();loadCustomers()}catch(e){showToast('Xatolik: '+e.message,'error')}
+}
+document.getElementById('quickCustomerForm').addEventListener('submit',async function(e){
+    e.preventDefault();var d={name:document.getElementById('quickName').value,additional_name:document.getElementById('quickAdditionalName').value||null,phone:document.getElementById('quickPhone').value||null,address:document.getElementById('quickAddress').value||null};
+    try{await customersAPI.create(d);showToast("Qo'shildi",'success');this.reset();loadCustomers()}catch(e){showToast('Xatolik: '+e.message,'error')}
+});
+async function deleteCustomer(id){if(!confirm("O'chirishni xohlaysizmi?"))return;try{await customersAPI.delete(id);showToast("O'chirildi",'success');loadCustomers()}catch(e){showToast('Xatolik: '+e.message,'error')}}
+loadCustomers();
+</script>
 </body>
 </html>

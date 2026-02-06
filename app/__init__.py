@@ -26,13 +26,20 @@ def create_app():
     # Flask-JWT-Extended 4.x uchun qo'shimcha sozlamalar
     app.config['JWT_DECODE_ALGORITHMS'] = ['HS256']
     
-    # Database Configuration
-    app.config['SQLALCHEMY_DATABASE_URI'] = (
-        f"mysql+pymysql://{os.getenv('DB_USER', 'root')}:"
-        f"{os.getenv('DB_PASSWORD', '')}@"
-        f"{os.getenv('DB_HOST', 'localhost')}/"
-        f"{os.getenv('DB_NAME', 'ngms_db')}"
-    )
+    # Database Configuration (Render: DATABASE_URL, lokal: MySQL env)
+    database_url = os.getenv('DATABASE_URL')
+    if database_url:
+        # Render PostgreSQL: postgres:// -> postgresql:// (SQLAlchemy 1.4+)
+        if database_url.startswith('postgres://'):
+            database_url = database_url.replace('postgres://', 'postgresql://', 1)
+        app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+    else:
+        app.config['SQLALCHEMY_DATABASE_URI'] = (
+            f"mysql+pymysql://{os.getenv('DB_USER', 'root')}:"
+            f"{os.getenv('DB_PASSWORD', '')}@"
+            f"{os.getenv('DB_HOST', 'localhost')}/"
+            f"{os.getenv('DB_NAME', 'ngms_db')}"
+        )
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     # Ulanishni barqarorlashtirish: eski ulanishlarni tekshirish va qayta ishlatish
     app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
@@ -72,6 +79,8 @@ def create_app():
     from app.routes.ai import ai_bp
     from app.routes.test_auth import test_bp
     from app.routes.config import config_bp
+    from app.routes.regions import regions_bp
+    from app.routes.shops import shops_bp
     
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
     app.register_blueprint(dashboard_bp, url_prefix='/api/dashboard')
@@ -81,6 +90,8 @@ def create_app():
     app.register_blueprint(ai_bp, url_prefix='/api/ai')
     app.register_blueprint(test_bp, url_prefix='/api/test')
     app.register_blueprint(config_bp, url_prefix='/api/config')
+    app.register_blueprint(regions_bp, url_prefix='/api/regions')
+    app.register_blueprint(shops_bp, url_prefix='/api/shops')
     
     # Serve frontend HTML files
     @app.route('/')
@@ -94,36 +105,39 @@ def create_app():
         # For other static files (CSS, JS, images), Flask will serve them automatically
         return app.send_static_file(filename)
     
-    # Create tables (only if database exists)
+    # Create tables (va MySQL da eski jadvallarga ustun qo'shish)
     with app.app_context():
         try:
             db.create_all()
-            # sales jadvaliga unit_price, purchase_price_at_sale, profit qo'shish (agar yo'q bo'lsa)
-            from sqlalchemy import text
-            for col, definition in [
-                ('unit_price', 'DECIMAL(10, 2) NULL'),
-                ('purchase_price_at_sale', 'DECIMAL(10, 2) NULL'),
-                ('profit', 'DECIMAL(10, 2) NULL'),
-            ]:
-                try:
-                    r = db.session.execute(text("""
-                        SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
-                        WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'sales' AND COLUMN_NAME = :name
-                    """), {'name': col})
-                    if r.scalar() is None:
-                        db.session.execute(text(f"ALTER TABLE sales ADD COLUMN {col} {definition}"))
-                        db.session.commit()
-                        print(f"  ✅ sales.{col} qo'shildi")
-                except Exception as e:
-                    db.session.rollback()
-                    if 'Duplicate column' not in str(e):
-                        print(f"  ⚠️  sales.{col}: {e}")
+            # Faqat MySQL uchun: sales jadvaliga ustunlar qo'shish (PostgreSQL da create_all yetadi)
+            if not os.getenv('DATABASE_URL'):
+                from sqlalchemy import text
+                for col, definition in [
+                    ('unit_price', 'DECIMAL(10, 2) NULL'),
+                    ('purchase_price_at_sale', 'DECIMAL(10, 2) NULL'),
+                    ('profit', 'DECIMAL(10, 2) NULL'),
+                ]:
+                    try:
+                        r = db.session.execute(text("""
+                            SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+                            WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'sales' AND COLUMN_NAME = :name
+                        """), {'name': col})
+                        if r.scalar() is None:
+                            db.session.execute(text(f"ALTER TABLE sales ADD COLUMN {col} {definition}"))
+                            db.session.commit()
+                            print(f"  ✅ sales.{col} qo'shildi")
+                    except Exception as e:
+                        db.session.rollback()
+                        if 'Duplicate column' not in str(e):
+                            print(f"  ⚠️  sales.{col}: {e}")
         except Exception as e:
             print(f"⚠️  Database xatosi: {e}")
-            print("⚠️  Iltimos, avval database yarating:")
-            print("   python create_database.py")
-            print("   yoki MySQL da:")
-            print("   CREATE DATABASE ngms_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;")
+            if os.getenv('DATABASE_URL'):
+                print("   Render: DATABASE_URL tekshiring.")
+            else:
+                print("   Iltimos, avval database yarating:")
+                print("   python create_database.py")
+                print("   yoki MySQL da: CREATE DATABASE ngms_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;")
     
     return app
 

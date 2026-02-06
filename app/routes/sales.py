@@ -88,15 +88,25 @@ def update_sale(sale_id):
         sale.amount = data['amount']
     if data.get('sale_date'):
         sale.sale_date = datetime.strptime(data['sale_date'], '%Y-%m-%d').date()
-    # Xarid narxi (savdo paytida): kiritilsa shu hisobga olinadi, aks holda mavjud yoki mahsulot narxi
-    purchase = sale.purchase_price_at_sale
-    if data.get('purchase_price_at_sale') is not None:
-        purchase = float(data['purchase_price_at_sale'])
-    elif purchase is None and sale.product_id:
-        product = Product.query.get(sale.product_id)
-        purchase = float(product.purchase_price) if product and product.purchase_price is not None else 0
+    # Xarid narxi (tan narx, savdo paytida): frontend yuborsa shu qiymat saqlanadi
+    if 'purchase_price_at_sale' in data:
+        raw = data['purchase_price_at_sale']
+        if raw is None or raw == '':
+            purchase = None
+        else:
+            try:
+                purchase = float(raw)
+            except (TypeError, ValueError):
+                purchase = None
         sale.purchase_price_at_sale = purchase
-    sale.purchase_price_at_sale = purchase
+    else:
+        purchase = sale.purchase_price_at_sale
+        if purchase is None and sale.product_id:
+            product = Product.query.get(sale.product_id)
+            purchase = float(product.purchase_price) if product and product.purchase_price is not None else 0
+            sale.purchase_price_at_sale = purchase
+        else:
+            purchase = float(purchase) if purchase is not None else 0
     sale.unit_price = round(float(sale.amount) / (sale.quantity or 1), 2) if sale.quantity else None
     sale.profit = round(float(sale.amount) - (float(purchase or 0) * (sale.quantity or 0)), 2)
     db.session.commit()

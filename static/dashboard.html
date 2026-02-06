@@ -5,260 +5,428 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - NGMS</title>
     <link rel="stylesheet" href="/static/css/style.css">
+    <script>if(localStorage.getItem('ngms_sb')==='c')document.documentElement.classList.add('collapsed')</script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-    <button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
-    <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
-    <aside class="sidebar" id="sidebar">
-        <div class="sidebar-header"><div class="sidebar-logo">NGMS</div></div>
-        <nav class="sidebar-nav">
-            <a href="/dashboard.html" class="nav-item active"><span class="nav-icon">📊</span>Dashboard</a>
-            <a href="/products.html" class="nav-item"><span class="nav-icon">📦</span>Mahsulotlar</a>
-            <a href="/customers.html" class="nav-item"><span class="nav-icon">👥</span>Mijozlar</a>
-            <a href="/sales.html" class="nav-item"><span class="nav-icon">💰</span>Savdo</a>
-            <a href="/maps.html" class="nav-item"><span class="nav-icon">📍</span>Xaritalar</a>
-            <a href="/ai.html" class="nav-item"><span class="nav-icon">🤖</span>AI Tahlil</a>
-        </nav>
-        <div class="sidebar-footer"><button class="btn btn-danger" style="width:100%" onclick="logout()">Chiqish</button></div>
-    </aside>
 
-    <main class="main-content">
-        <div class="page-header">
-            <div>
-                <h1 class="page-title">Dashboard</h1>
-                <p class="page-subtitle">Biznes statistikasi</p>
+<main class="main-content" id="mainContent">
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Dashboard</h1>
+            <p class="page-subtitle">Biznes ko'rsatkichlari</p>
+        </div>
+    </div>
+    <div id="dashboardError" class="card mb-4" style="display:none;border-left:3px solid var(--red)">
+        <div class="card-body flex justify-between items-center">
+            <p id="dashboardErrorText" class="text-gray" style="margin:0"></p>
+            <button class="btn btn-sm btn-primary" onclick="load(true)">Qayta yuklash</button>
+        </div>
+    </div>
+
+    <!-- KPI Row 1 -->
+    <div class="grid grid-4 mb-4">
+        <div class="stat-card accent-green">
+            <p class="stat-label">Umumiy aylanma</p>
+            <p class="stat-value" id="totalRevenue">-</p>
+        </div>
+        <div class="stat-card accent-blue">
+            <p class="stat-label">Oylik savdo</p>
+            <p class="stat-value" id="monthlySales">-</p>
+            <p class="stat-sub" id="growthTag"></p>
+        </div>
+        <div class="stat-card accent-purple">
+            <p class="stat-label">Sof foyda (jami)</p>
+            <p class="stat-value" id="totalProfit">-</p>
+            <p class="stat-sub" id="monthlyProfitTag"></p>
+        </div>
+        <div class="stat-card accent-orange">
+            <p class="stat-label">Jami sotilgan</p>
+            <p class="stat-value" id="totalQty">-</p>
+            <p class="stat-sub" id="monthlyQtyTag"></p>
+        </div>
+    </div>
+
+    <!-- KPI Row 2 -->
+    <div class="grid grid-4 mb-6">
+        <div class="stat-card">
+            <p class="stat-label">Kunlik savdo</p>
+            <p class="stat-value" id="dailySales">-</p>
+        </div>
+        <div class="stat-card">
+            <p class="stat-label">Yillik savdo</p>
+            <p class="stat-value" id="yearlySales">-</p>
+        </div>
+        <div class="stat-card">
+            <p class="stat-label">Mijozlar</p>
+            <p class="stat-value" id="customersCount">0</p>
+        </div>
+        <div class="stat-card">
+            <p class="stat-label">Mahsulotlar</p>
+            <p class="stat-value" id="productsCount">0</p>
+        </div>
+    </div>
+
+    <!-- Chart: Revenue Trend -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h3 class="card-title">Savdo dinamikasi</h3>
+            <div class="flex gap-2 items-center">
+                <select id="growthYearSelect" class="form-select" style="width:auto;padding:6px 28px 6px 10px;font-size:12px">
+                    <option value="all">Barcha davr</option>
+                </select>
             </div>
         </div>
-
-        <!-- Xato banner -->
-        <div id="dashboardErrorBanner" class="card mb-4" style="display:none; border-left:3px solid var(--red);">
-            <div class="card-body flex justify-between items-center">
-                <p id="dashboardErrorText" class="text-gray" style="margin:0">Ma'lumotlar yuklanmadi.</p>
-                <button class="btn btn-sm btn-primary" onclick="document.getElementById('dashboardErrorBanner').style.display='none'; loadDashboard();">Qayta yuklash</button>
-            </div>
+        <div class="card-body">
+            <canvas id="growthChart" height="70"></canvas>
         </div>
+    </div>
 
-        <!-- Asosiy ko'rsatkichlar -->
-        <div class="grid grid-4 mb-6">
-            <div class="stat-card gradient-green">
-                <p class="stat-label">Umumiy Aylanma</p>
-                <p class="stat-value" id="totalRevenue">0 so'm</p>
-            </div>
-            <div class="stat-card gradient-blue">
-                <p class="stat-label">Oylik Savdo</p>
-                <p class="stat-value" id="monthlySales">0 so'm</p>
-                <small class="text-gray" id="growthPercent">+0%</small>
-            </div>
-            <div class="stat-card gradient-purple">
-                <p class="stat-label">Sof Foyda (jami)</p>
-                <p class="stat-value" id="totalProfit">0 so'm</p>
-                <small class="text-gray" id="monthlyProfitHint">Ushbu oy: 0 so'm</small>
-            </div>
-            <div class="stat-card gradient-orange">
-                <p class="stat-label">Jami Sotilgan</p>
-                <p class="stat-value" id="totalQuantitySold">0 dona</p>
-                <small class="text-gray" id="monthlyQuantityHint">Ushbu oy: 0 dona</small>
-            </div>
-        </div>
-
-        <!-- Qo'shimcha -->
-        <div class="grid grid-4 mb-6">
-            <div class="stat-card">
-                <p class="stat-label">Kunlik Savdo</p>
-                <p class="stat-value" id="dailySales">0</p>
-            </div>
-            <div class="stat-card">
-                <p class="stat-label">Yillik Savdo</p>
-                <p class="stat-value" id="yearlySales">0</p>
-            </div>
-            <div class="stat-card">
-                <p class="stat-label">Mijozlar</p>
-                <p class="stat-value" id="customersCount">0</p>
-            </div>
-            <div class="stat-card">
-                <p class="stat-label">Mahsulotlar</p>
-                <p class="stat-value" id="productsCount">0</p>
-            </div>
-        </div>
-
-        <!-- Top Mahsulot va Mijoz -->
-        <div class="grid grid-2 mb-6">
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">Eng Ko'p Sotilgan Mahsulot</h3>
-                </div>
-                <div class="card-body">
-                    <p id="topProductName" style="font-size:20px; font-weight:700; margin-bottom:8px;">-</p>
-                    <div class="flex gap-4">
-                        <div>
-                            <small class="text-gray">Miqdor</small>
-                            <p id="topProductQuantity" class="font-bold">0</p>
-                        </div>
-                        <div>
-                            <small class="text-gray">Summa</small>
-                            <p id="topProductAmount" class="font-bold">0</p>
-                        </div>
-                    </div>
-                    <canvas id="topProductsChart" height="160" style="margin-top:16px;"></canvas>
-                </div>
-            </div>
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">Eng Ko'p Xarid Qilgan Mijoz</h3>
-                </div>
-                <div class="card-body">
-                    <p id="topCustomerName" style="font-size:20px; font-weight:700; margin-bottom:8px;">-</p>
-                    <div>
-                        <small class="text-gray">Jami xarid</small>
-                        <p id="topCustomerAmount" class="font-bold">0</p>
-                    </div>
-                    <canvas id="topCustomersChart" height="160" style="margin-top:16px;"></canvas>
-                </div>
-            </div>
-        </div>
-
-        <!-- O'sish grafik -->
-        <div class="card mb-6">
-            <div class="card-header">
-                <h3 class="card-title">O'sish Dinamikasi (12 oy)</h3>
-            </div>
-            <div class="card-body">
-                <canvas id="growthChart" height="80"></canvas>
-            </div>
-        </div>
-
-        <!-- AI -->
+    <!-- Two columns -->
+    <div class="grid grid-2 mb-4">
+        <!-- Top Products -->
         <div class="card">
             <div class="card-header">
-                <h3 class="card-title">AI Tavsiyalari</h3>
+                <h3 class="card-title">Top mahsulotlar</h3>
             </div>
+            <div class="card-body" style="display:flex;align-items:center;justify-content:center;min-height:220px">
+                <canvas id="productsChart" width="220" height="220"></canvas>
+            </div>
+        </div>
+        <!-- Top Customers -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Top mijozlar</h3>
+            </div>
+            <div class="card-body" style="min-height:220px">
+                <canvas id="customersChart" height="220"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Best product & customer -->
+    <div class="grid grid-2 mb-4">
+        <div class="card">
             <div class="card-body">
-                <div id="aiRecommendations" class="text-gray">
-                    <div class="spinner" style="margin:0 auto;"></div>
+                <p class="stat-label">Eng ko'p sotilgan mahsulot</p>
+                <p class="stat-value" id="topProductName" style="font-size:17px">-</p>
+                <div class="flex gap-4 mt-2">
+                    <div><p class="stat-label">Miqdor</p><p class="font-bold" id="topProductQty">0</p></div>
+                    <div><p class="stat-label">Summa</p><p class="font-bold" id="topProductAmt">0</p></div>
                 </div>
             </div>
         </div>
-    </main>
+        <div class="card">
+            <div class="card-body">
+                <p class="stat-label">Eng faol mijoz</p>
+                <p class="stat-value" id="topCustomerName" style="font-size:17px">-</p>
+                <div class="mt-2"><p class="stat-label">Jami xarid</p><p class="font-bold" id="topCustomerAmt">0</p></div>
+            </div>
+        </div>
+    </div>
 
-    <script src="/static/js/api.js"></script>
-    <script>
-        if (!getAuthToken()) window.location.href = '/login.html';
+    <!-- Oylik statistika -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h3 class="card-title">Oylik statistika</h3>
+            <div class="flex gap-2 items-center">
+                <select id="monthSelect" class="form-select" style="width:auto;padding:6px 28px 6px 10px;font-size:12px"></select>
+                <select id="yearSelect" class="form-select" style="width:auto;padding:6px 28px 6px 10px;font-size:12px"></select>
+                <button class="btn btn-sm btn-primary" onclick="showMonthlyStats()">Ko'rish</button>
+            </div>
+        </div>
+        <div class="card-body" id="monthlyPreview">
+            <p class="text-gray text-center" style="font-size:13px">Oy va yilni tanlang va "Ko'rish" tugmasini bosing</p>
+        </div>
+    </div>
 
-        function logout() { removeAuthToken(); window.location.href = '/login.html'; }
-        function toggleSidebar() {
-            document.getElementById('sidebar').classList.toggle('open');
-            document.querySelector('.sidebar-overlay').classList.toggle('active');
+    <!-- AI -->
+    <div class="card">
+        <div class="card-header"><h3 class="card-title">AI tavsiyalari</h3></div>
+        <div class="card-body" id="aiBox"><div class="spinner" style="margin:0 auto"></div></div>
+    </div>
+</main>
+
+<!-- Oylik statistika modali -->
+<div class="modal" id="monthlyModal">
+    <div class="modal-backdrop" onclick="closeMonthlyModal()"></div>
+    <div class="modal-content" style="max-width:900px;max-height:90vh;overflow-y:auto">
+        <div class="modal-header">
+            <h3 class="modal-title" id="monthlyModalTitle">Oylik statistika</h3>
+            <button class="modal-close" onclick="closeMonthlyModal()">×</button>
+        </div>
+        <div class="modal-body" id="monthlyModalBody">
+            <div class="spinner" style="margin:40px auto"></div>
+        </div>
+    </div>
+</div>
+
+<script src="/static/js/cache.js"></script>
+<script src="/static/js/api.js"></script>
+<script src="/static/js/utils.js"></script>
+<script src="/static/js/nav.js"></script>
+<script>
+var CC=['#0a84ff','#30d158','#ff9f0a','#bf5af2','#ff453a','#ffd60a'];
+
+function growthLabels(gd,isAll){
+    if(!gd.length)return [];
+    if(isAll) return gd.map(function(x){var p=x.month.split('-');var y=parseInt(p[0],10);var m=parseInt(p[1],10);return OY_QISQA[m-1]+' '+String(y).slice(-2);});
+    return gd.map(function(x){var m=parseInt(x.month.split('-')[1],10);return OY_NOMLARI[m-1];});
+}
+
+Chart.defaults.color='#8e8e93';
+Chart.defaults.borderColor='rgba(255,255,255,.06)';
+Chart.defaults.font.family="-apple-system,'SF Pro Display','Inter',sans-serif";
+Chart.defaults.font.size=11;
+
+var growthChartInstance=null;
+
+function buildGrowthYearSelect(){
+    var sel=document.getElementById('growthYearSelect');
+    var y=new Date().getFullYear();
+    var opts='<option value="all">Barcha davr</option>';
+    for(var i=y;i>=y-10;i--) opts+='<option value="'+i+'"'+(i===y?' selected':'')+'>'+i+'</option>';
+    sel.innerHTML=opts;
+    sel.addEventListener('change',function(){drawGrowthChart();});
+}
+
+async function drawGrowthChart(){
+    var sel=document.getElementById('growthYearSelect');
+    var val=sel.value;
+    var isAll=val==='all';
+    var params=isAll?{period:'all'}:{year:val};
+    try{
+        var gd=await dashboardAPI.getGrowthDynamics(params);
+        if(growthChartInstance){growthChartInstance.destroy();growthChartInstance=null;}
+        if(!gd||gd.length===0){
+            var ctx=document.getElementById('growthChart').getContext('2d');
+            if(ctx){ctx.font='14px system-ui';ctx.fillStyle='var(--text-tertiary)';ctx.textAlign='center';ctx.fillText('Ma\'lumot yo\'q',document.getElementById('growthChart').width/2,document.getElementById('growthChart').height/2);}
+            return;
         }
+        growthChartInstance=new Chart(document.getElementById('growthChart'),{
+            type:'line',
+            data:{
+                labels:growthLabels(gd,isAll),
+                datasets:[{
+                    label:'Savdo',data:gd.map(function(x){return x.sales}),
+                    borderColor:'#0a84ff',backgroundColor:'rgba(10,132,255,.1)',
+                    borderWidth:2,tension:.4,fill:true,pointRadius:3,pointBackgroundColor:'#0a84ff'
+                }]
+            },
+            options:{responsive:true,plugins:{legend:{display:false}},
+                scales:{y:{beginAtZero:true,ticks:{callback:function(v){return fmt(v)}},grid:{color:'rgba(255,255,255,.04)'}},x:{grid:{display:false},ticks:{maxRotation:isAll?45:0,minRotation:0}}}}
+        });
+    }catch(e){console.error(e)}
+}
 
-        function fmt(n) { return new Intl.NumberFormat('uz-UZ').format(n || 0); }
-        function fmtC(n) { return fmt(n) + " so'm"; }
+function setStats(s){
+    if(!s)return;
+    document.getElementById('totalRevenue').textContent=fmtC(s.total_revenue);
+    document.getElementById('monthlySales').textContent=fmtC(s.monthly_sales);
+    document.getElementById('totalProfit').textContent=fmtC(s.total_profit);
+    document.getElementById('monthlyProfitTag').textContent='Ushbu oy: '+fmtC(s.monthly_profit);
+    var tq=s.total_quantity_sold_all_time!==undefined?s.total_quantity_sold_all_time:s.total_quantity_sold||0;
+    document.getElementById('totalQty').textContent=fmt(tq)+' dona';
+    document.getElementById('monthlyQtyTag').textContent='Ushbu oy: '+fmt(s.total_quantity_sold||0);
+    document.getElementById('dailySales').textContent=fmtC(s.daily_sales);
+    document.getElementById('yearlySales').textContent=fmtC(s.yearly_sales);
+    document.getElementById('customersCount').textContent=s.customers_count!==undefined?s.customers_count:0;
+    document.getElementById('productsCount').textContent=s.products_count!==undefined?s.products_count:0;
+    var g=Number(s.growth_percent)||0;
+    document.getElementById('growthTag').textContent=(g>=0?'+':'')+g.toFixed(1)+'%';
+    document.getElementById('growthTag').style.color=g>=0?'var(--green)':'var(--red)';
+}
 
-        const chartColors = ['#0071e3','#34c759','#ff9500','#af52de','#ff3b30'];
-
-        async function loadDashboard() {
-            const errBanner = document.getElementById('dashboardErrorBanner');
-            errBanner.style.display = 'none';
-            try {
-                const s = await dashboardAPI.getStats();
-                if (s && s.error) {
-                    document.getElementById('dashboardErrorText').textContent = s.error;
-                    errBanner.style.display = 'block';
-                    return;
-                }
-                document.getElementById('totalRevenue').textContent = fmtC(s.total_revenue);
-                document.getElementById('monthlySales').textContent = fmtC(s.monthly_sales);
-                document.getElementById('totalProfit').textContent = fmtC(s.total_profit);
-                document.getElementById('monthlyProfitHint').textContent = 'Ushbu oy: ' + fmtC(s.monthly_profit);
-                const totalQ = s.total_quantity_sold_all_time ?? s.total_quantity_sold ?? 0;
-                document.getElementById('totalQuantitySold').textContent = fmt(totalQ) + ' dona';
-                document.getElementById('monthlyQuantityHint').textContent = 'Ushbu oy: ' + fmt(s.total_quantity_sold || 0) + ' dona';
-                document.getElementById('dailySales').textContent = fmtC(s.daily_sales);
-                document.getElementById('yearlySales').textContent = fmtC(s.yearly_sales);
-                document.getElementById('customersCount').textContent = s.customers_count || 0;
-                document.getElementById('productsCount').textContent = s.products_count || 0;
-                const g = s.growth_percent || 0;
-                document.getElementById('growthPercent').textContent = (g>=0?'+':'') + g.toFixed(1) + '%';
-
-                const d = await dashboardAPI.getDetailedStats();
-                document.getElementById('topProductName').textContent = d.top_product.name;
-                document.getElementById('topProductQuantity').textContent = fmt(d.top_product.quantity);
-                document.getElementById('topProductAmount').textContent = fmtC(d.top_product.amount);
-                document.getElementById('topCustomerName').textContent = d.top_customer.name;
-                document.getElementById('topCustomerAmount').textContent = fmtC(d.top_customer.amount);
-
-                // Growth chart
-                const gd = await dashboardAPI.getGrowthDynamics();
-                new Chart(document.getElementById('growthChart'), {
-                    type: 'line',
-                    data: {
-                        labels: gd.map(x => { const [y,m]=x.month.split('-'); return new Date(y,m-1).toLocaleDateString('uz-UZ',{month:'short'}); }),
-                        datasets: [{
-                            label: 'Savdo',
-                            data: gd.map(x => x.sales),
-                            borderColor: '#0071e3',
-                            backgroundColor: 'rgba(0,113,227,.08)',
-                            borderWidth: 2,
-                            tension: .4,
-                            fill: true,
-                            pointRadius: 3,
-                            pointBackgroundColor: '#0071e3'
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        plugins: { legend: { display: false } },
-                        scales: {
-                            y: { beginAtZero: true, ticks: { callback: v => fmt(v) }, grid: { color: 'rgba(0,0,0,.04)' } },
-                            x: { grid: { display: false } }
-                        }
-                    }
-                });
-
-                // Top products chart
-                const tp = await dashboardAPI.getTopProducts();
-                new Chart(document.getElementById('topProductsChart'), {
-                    type: 'doughnut',
-                    data: {
-                        labels: tp.slice(0,5).map(p => p.name),
-                        datasets: [{ data: tp.slice(0,5).map(p => p.total_quantity), backgroundColor: chartColors }]
-                    },
-                    options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 12 } } } } }
-                });
-
-                // Top customers chart
-                const tc = await dashboardAPI.getTopCustomers();
-                new Chart(document.getElementById('topCustomersChart'), {
-                    type: 'bar',
-                    data: {
-                        labels: tc.map(c => c.name.length > 12 ? c.name.substring(0,12) + '...' : c.name),
-                        datasets: [{ label: 'Xarid', data: tc.map(c => c.total_amount), backgroundColor: '#0071e3', borderRadius: 6 }]
-                    },
-                    options: {
-                        responsive: true,
-                        plugins: { legend: { display: false } },
-                        scales: {
-                            y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,.04)' } },
-                            x: { grid: { display: false } }
-                        }
-                    }
-                });
-
-                // AI
-                try {
-                    const ai = await aiAPI.getRecommendations();
-                    document.getElementById('aiRecommendations').innerHTML = '<p style="white-space:pre-line;line-height:1.8;">' + ai.recommendations + '</p>';
-                } catch {
-                    document.getElementById('aiRecommendations').innerHTML = '<p class="text-gray">AI tavsiyalari mavjud emas.</p>';
-                }
-            } catch (error) {
-                console.error('Dashboard xatolik:', error);
-                document.getElementById('dashboardErrorText').textContent = (error && error.message) || 'Server bilan ulanishda xatolik.';
-                document.getElementById('dashboardErrorBanner').style.display = 'block';
-            }
+async function load(forceRefresh){
+    var errEl=document.getElementById('dashboardError');
+    errEl.style.display='none';
+    
+    // Majburiy yangilash yoki birinchi yuklashda keshni tozalash
+    if(forceRefresh && typeof cacheInvalidate==='function'){
+        cacheInvalidate(['dash']);
+    }
+    
+    try{
+        var s=await dashboardAPI.getStats();
+        if(s&&s.error){
+            document.getElementById('dashboardErrorText').textContent=s.error;
+            errEl.style.display='block';
+            setStats(s);
+        }else if(s){
+            setStats(s);
         }
+    }catch(e){
+        console.error(e);
+        document.getElementById('dashboardErrorText').textContent=(e&&e.message)||'Ma\'lumot yuklanmadi. Token yoki serverni tekshiring.';
+        errEl.style.display='block';
+        setStats({daily_sales:0,monthly_sales:0,yearly_sales:0,total_revenue:0,monthly_profit:0,total_profit:0,total_quantity_sold:0,total_quantity_sold_all_time:0,growth_percent:0,customers_count:0,products_count:0});
+    }
 
-        loadDashboard();
-    </script>
+    buildGrowthYearSelect();
+    await drawGrowthChart();
+
+    /* Top products donut */
+    try{
+        var tp=await dashboardAPI.getTopProducts();
+        new Chart(document.getElementById('productsChart'),{
+            type:'doughnut',
+            data:{labels:tp.slice(0,5).map(function(p){return p.name}),datasets:[{data:tp.slice(0,5).map(function(p){return p.total_quantity}),backgroundColor:CC,borderWidth:0}]},
+            options:{responsive:false,cutout:'65%',plugins:{legend:{position:'bottom',labels:{boxWidth:8,padding:8,font:{size:11}}}}}
+        });
+    }catch(e){console.error(e)}
+
+    /* Top customers bar */
+    try{
+        var tc=await dashboardAPI.getTopCustomers();
+        new Chart(document.getElementById('customersChart'),{
+            type:'bar',
+            data:{labels:tc.map(function(c){return c.name.length>14?c.name.substring(0,14)+'…':c.name}),datasets:[{label:'Xarid',data:tc.map(function(c){return c.total_amount}),backgroundColor:'rgba(10,132,255,.7)',borderRadius:4}]},
+            options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{beginAtZero:true,ticks:{callback:function(v){return fmt(v)}},grid:{color:'rgba(255,255,255,.04)'}},y:{grid:{display:false}}}}
+        });
+    }catch(e){console.error(e)}
+
+    /* Detail stats */
+    try{
+        var d=await dashboardAPI.getDetailedStats();
+        document.getElementById('topProductName').textContent=d.top_product.name;
+        document.getElementById('topProductQty').textContent=fmt(d.top_product.quantity);
+        document.getElementById('topProductAmt').textContent=fmtC(d.top_product.amount);
+        document.getElementById('topCustomerName').textContent=d.top_customer.name;
+        document.getElementById('topCustomerAmt').textContent=fmtC(d.top_customer.amount);
+    }catch(e){console.error(e)}
+
+    /* AI */
+    try{
+        var ai=await aiAPI.getRecommendations();
+        document.getElementById('aiBox').innerHTML='<p style="white-space:pre-line;line-height:1.7;font-size:13px;color:var(--text-secondary)">'+ai.recommendations+'</p>';
+    }catch(e){
+        document.getElementById('aiBox').innerHTML='<p class="text-gray" style="font-size:13px">AI tavsiyalari mavjud emas.</p>';
+    }
+    
+    /* Oylik tanlash formasi */
+    buildMonthYearSelects();
+}
+
+/* Oylik statistika */
+function buildMonthYearSelects(){
+    var monthSel=document.getElementById('monthSelect');
+    var yearSel=document.getElementById('yearSelect');
+    var now=new Date();
+    var curMonth=now.getMonth()+1;
+    var curYear=now.getFullYear();
+    
+    // Oylar
+    var mOpts='';
+    for(var i=1;i<=12;i++){
+        mOpts+='<option value="'+i+'"'+(i===curMonth?' selected':'')+'>'+OY_NOMLARI[i-1]+'</option>';
+    }
+    monthSel.innerHTML=mOpts;
+    
+    // Yillar (joriy yildan 5 yil orqaga)
+    var yOpts='';
+    for(var y=curYear;y>=curYear-5;y--){
+        yOpts+='<option value="'+y+'"'+(y===curYear?' selected':'')+'>'+y+'</option>';
+    }
+    yearSel.innerHTML=yOpts;
+}
+
+var monthlyChartInstance=null;
+
+function closeMonthlyModal(){
+    document.getElementById('monthlyModal').classList.remove('active');
+}
+
+async function showMonthlyStats(){
+    var month=parseInt(document.getElementById('monthSelect').value);
+    var year=parseInt(document.getElementById('yearSelect').value);
+    
+    document.getElementById('monthlyModalTitle').textContent=OY_NOMLARI[month-1]+' '+year+' statistikasi';
+    document.getElementById('monthlyModalBody').innerHTML='<div class="spinner" style="margin:40px auto"></div>';
+    document.getElementById('monthlyModal').classList.add('active');
+    
+    try{
+        var d=await dashboardAPI.getMonthlyStats(year,month);
+        
+        var html='<div class="grid grid-4 mb-4">';
+        html+='<div class="stat-card accent-green"><p class="stat-label">Jami tushum</p><p class="stat-value">'+fmtC(d.total_sales)+'</p></div>';
+        html+='<div class="stat-card accent-blue"><p class="stat-label">Sof foyda</p><p class="stat-value">'+fmtC(d.total_profit)+'</p></div>';
+        html+='<div class="stat-card accent-purple"><p class="stat-label">Sotilgan dona</p><p class="stat-value">'+fmt(d.total_quantity)+'</p></div>';
+        html+='<div class="stat-card accent-orange"><p class="stat-label">Savdolar soni</p><p class="stat-value">'+fmt(d.sales_count)+'</p></div>';
+        html+='</div>';
+        
+        // Kunlik grafik
+        html+='<div class="card mb-4"><div class="card-header"><h3 class="card-title">Kunlik savdo dinamikasi</h3></div>';
+        html+='<div class="card-body"><canvas id="monthlyDailyChart" height="80"></canvas></div></div>';
+        
+        // Top mahsulotlar va mijozlar
+        html+='<div class="grid grid-2 mb-4">';
+        
+        // Top mahsulotlar
+        html+='<div class="card"><div class="card-header"><h3 class="card-title">Top mahsulotlar</h3></div><div class="card-body" style="padding:0">';
+        if(d.top_products.length){
+            html+='<table class="table"><thead><tr><th>Mahsulot</th><th>Miqdor</th><th>Summa</th></tr></thead><tbody>';
+            d.top_products.forEach(function(p){
+                html+='<tr><td><strong>'+p.name+'</strong></td><td>'+fmt(p.quantity)+' dona</td><td>'+fmtC(p.amount)+'</td></tr>';
+            });
+            html+='</tbody></table>';
+        }else{
+            html+='<p class="text-gray text-center p-4">Ma\'lumot yo\'q</p>';
+        }
+        html+='</div></div>';
+        
+        // Top mijozlar
+        html+='<div class="card"><div class="card-header"><h3 class="card-title">Top mijozlar</h3></div><div class="card-body" style="padding:0">';
+        if(d.top_customers.length){
+            html+='<table class="table"><thead><tr><th>Mijoz</th><th>Miqdor</th><th>Summa</th></tr></thead><tbody>';
+            d.top_customers.forEach(function(c){
+                var name=c.name+(c.additional_name?' ('+c.additional_name+')':'');
+                html+='<tr><td><strong>'+name+'</strong></td><td>'+fmt(c.quantity)+' dona</td><td>'+fmtC(c.amount)+'</td></tr>';
+            });
+            html+='</tbody></table>';
+        }else{
+            html+='<p class="text-gray text-center p-4">Ma\'lumot yo\'q</p>';
+        }
+        html+='</div></div>';
+        
+        html+='</div>';
+        
+        document.getElementById('monthlyModalBody').innerHTML=html;
+        
+        // Kunlik grafik chizish
+        if(d.daily_sales.length){
+            if(monthlyChartInstance){monthlyChartInstance.destroy();monthlyChartInstance=null;}
+            var ctx=document.getElementById('monthlyDailyChart');
+            monthlyChartInstance=new Chart(ctx,{
+                type:'bar',
+                data:{
+                    labels:d.daily_sales.map(function(x){return fmtDShort(x.date)}),
+                    datasets:[{
+                        label:'Savdo',
+                        data:d.daily_sales.map(function(x){return x.amount}),
+                        backgroundColor:'rgba(10,132,255,.7)',
+                        borderRadius:4
+                    }]
+                },
+                options:{
+                    responsive:true,
+                    plugins:{legend:{display:false}},
+                    scales:{
+                        y:{beginAtZero:true,ticks:{callback:function(v){return fmt(v)}},grid:{color:'rgba(255,255,255,.04)'}},
+                        x:{grid:{display:false}}
+                    }
+                }
+            });
+        }
+        
+    }catch(e){
+        console.error(e);
+        document.getElementById('monthlyModalBody').innerHTML='<p class="text-danger text-center p-4">Xatolik: '+(e.message||'Ma\'lumot yuklanmadi')+'</p>';
+    }
+}
+
+// Birinchi yuklashda eski keshni tozalaymiz
+if(typeof cacheInvalidate==='function') cacheInvalidate(['dash']);
+load();
+</script>
 </body>
 </html>
