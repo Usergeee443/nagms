@@ -180,6 +180,150 @@ def get_growth_dynamics():
         db.session.rollback()
         return jsonify([]), 200
 
+
+@dashboard_bp.route('/profit-dynamics', methods=['GET'])
+@jwt_required()
+def get_profit_dynamics():
+    """Oylik foyda dinamikasi. Query: year=2026 yoki period=all"""
+    try:
+        get_jwt_identity()
+        today = datetime.now().date()
+        period = request.args.get('period', '').strip().lower()
+        year_param = request.args.get('year', '').strip()
+        profit_expr = func.coalesce(Sale.profit, Sale.amount - (Product.purchase_price * Sale.quantity))
+
+        if period == 'all':
+            first = db.session.query(func.min(Sale.sale_date)).scalar()
+            if not first:
+                return jsonify([]), 200
+            if isinstance(first, datetime):
+                first = first.date()
+            y, m = first.year, first.month
+            data = []
+            while (y, m) <= (today.year, today.month):
+                month_start, month_end = _month_start_end(y, m)
+                profit = db.session.query(func.sum(profit_expr)).join(
+                    Product, Sale.product_id == Product.id
+                ).filter(Sale.sale_date >= month_start, Sale.sale_date <= month_end).scalar() or 0
+                data.append({'month': f'{y}-{m:02d}', 'profit': _to_float(profit)})
+                m += 1
+                if m > 12:
+                    m, y = 1, y + 1
+            return jsonify(data), 200
+
+        y = int(year_param) if year_param.isdigit() else today.year
+        data = []
+        for month in range(1, 13):
+            month_start, month_end = _month_start_end(y, month)
+            profit = db.session.query(func.sum(profit_expr)).join(
+                Product, Sale.product_id == Product.id
+            ).filter(Sale.sale_date >= month_start, Sale.sale_date <= month_end).scalar() or 0
+            data.append({'month': f'{y}-{month:02d}', 'profit': _to_float(profit)})
+        return jsonify(data), 200
+    except OperationalError:
+        db.session.rollback()
+        return jsonify([]), 200
+
+
+@dashboard_bp.route('/daily-sales', methods=['GET'])
+@jwt_required()
+def get_daily_sales():
+    """Oxirgi N kunlik savdo. Query: days=30"""
+    try:
+        get_jwt_identity()
+        days = min(90, max(7, request.args.get('days', type=int) or 30))
+        end_date = datetime.now().date()
+        start_date = end_date - timedelta(days=days)
+        rows = db.session.query(
+            Sale.sale_date,
+            func.sum(Sale.amount).label('amount'),
+            func.count(Sale.id).label('count')
+        ).filter(
+            Sale.sale_date >= start_date,
+            Sale.sale_date <= end_date
+        ).group_by(Sale.sale_date).order_by(Sale.sale_date).all()
+        result = [{'date': str(r.sale_date), 'sales': _to_float(r.amount), 'count': _to_int(r.count)} for r in rows]
+        return jsonify(result), 200
+    except OperationalError:
+        db.session.rollback()
+        return jsonify([]), 200
+
+
+@dashboard_bp.route('/weekly-sales', methods=['GET'])
+@jwt_required()
+def get_weekly_sales():
+    """Oxirgi N haftalik savdo. Query: weeks=12 (har hafta 7 kun)"""
+    try:
+        get_jwt_identity()
+        weeks = min(26, max(4, request.args.get('weeks', type=int) or 12))
+        end_date = datetime.now().date()
+        result = []
+        for i in range(weeks - 1, -1, -1):
+            week_end = end_date - timedelta(days=i * 7)
+            week_start = week_end - timedelta(days=6)
+            amount = db.session.query(func.sum(Sale.amount)).filter(
+                Sale.sale_date >= week_start,
+                Sale.sale_date <= week_end
+            ).scalar() or 0
+            count = db.session.query(func.count(Sale.id)).filter(
+                Sale.sale_date >= week_start,
+                Sale.sale_date <= week_end
+            ).scalar() or 0
+            result.append({
+                'week': week_start.isoformat(),
+                'label': f'{week_start.day}.{week_start.month}-{week_end.day}.{week_end.month}',
+                'sales': _to_float(amount),
+                'count': _to_int(count)
+            })
+        return jsonify(result), 200
+    except OperationalError:
+        db.session.rollback()
+        return jsonify([]), 200
+
+
+@dashboard_bp.route('/sales-count-dynamics', methods=['GET'])
+@jwt_required()
+def get_sales_count_dynamics():
+    """Oylik savdolar soni. Query: year= yoki period=all"""
+    try:
+        get_jwt_identity()
+        today = datetime.now().date()
+        period = request.args.get('period', '').strip().lower()
+        year_param = request.args.get('year', '').strip()
+
+        if period == 'all':
+            first = db.session.query(func.min(Sale.sale_date)).scalar()
+            if not first:
+                return jsonify([]), 200
+            if isinstance(first, datetime):
+                first = first.date()
+            y, m = first.year, first.month
+            data = []
+            while (y, m) <= (today.year, today.month):
+                month_start, month_end = _month_start_end(y, m)
+                cnt = db.session.query(func.count(Sale.id)).filter(
+                    Sale.sale_date >= month_start, Sale.sale_date <= month_end
+                ).scalar() or 0
+                data.append({'month': f'{y}-{m:02d}', 'count': _to_int(cnt)})
+                m += 1
+                if m > 12:
+                    m, y = 1, y + 1
+            return jsonify(data), 200
+
+        y = int(year_param) if year_param.isdigit() else today.year
+        data = []
+        for month in range(1, 13):
+            month_start, month_end = _month_start_end(y, month)
+            cnt = db.session.query(func.count(Sale.id)).filter(
+                Sale.sale_date >= month_start, Sale.sale_date <= month_end
+            ).scalar() or 0
+            data.append({'month': f'{y}-{month:02d}', 'count': _to_int(cnt)})
+        return jsonify(data), 200
+    except OperationalError:
+        db.session.rollback()
+        return jsonify([]), 200
+
+
 @dashboard_bp.route('/top-products', methods=['GET'])
 @jwt_required()
 def get_top_products():

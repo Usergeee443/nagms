@@ -147,7 +147,28 @@ const dashboardAPI = {
         const key = 'dash_growth_' + (params.period || params.year || 'cur');
         return await apiRequest('/dashboard/growth-dynamics' + query, {}, { key });
     },
-    
+    getProfitDynamics: async (params = {}) => {
+        const q = new URLSearchParams();
+        if (params.period === 'all') q.append('period', 'all');
+        else if (params.year) q.append('year', params.year);
+        const query = q.toString() ? '?' + q.toString() : '';
+        const key = 'dash_profit_' + (params.period || params.year || 'cur');
+        return await apiRequest('/dashboard/profit-dynamics' + query, {}, { key });
+    },
+    getDailySales: async (days = 30) => {
+        return await apiRequest('/dashboard/daily-sales?days=' + days, {}, { key: 'dash_daily_' + days });
+    },
+    getWeeklySales: async (weeks = 12) => {
+        return await apiRequest('/dashboard/weekly-sales?weeks=' + weeks, {}, { key: 'dash_weekly_' + weeks });
+    },
+    getSalesCountDynamics: async (params = {}) => {
+        const q = new URLSearchParams();
+        if (params.period === 'all') q.append('period', 'all');
+        else if (params.year) q.append('year', params.year);
+        const query = q.toString() ? '?' + q.toString() : '';
+        const key = 'dash_count_' + (params.period || params.year || 'cur');
+        return await apiRequest('/dashboard/sales-count-dynamics' + query, {}, { key });
+    },
     getTopProducts: async () => {
         return await apiRequest('/dashboard/top-products', {}, { key: 'dash_top_prod' });
     },

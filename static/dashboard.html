@@ -67,10 +67,10 @@
         </div>
     </div>
 
-    <!-- Chart: Revenue Trend -->
+    <!-- 1. Savdo dinamikasi -->
     <div class="card mb-4">
         <div class="card-header">
-            <h3 class="card-title">Savdo dinamikasi</h3>
+            <h3 class="card-title">Savdo dinamikasi (oylik)</h3>
             <div class="flex gap-2 items-center">
                 <select id="growthYearSelect" class="form-select" style="width:auto;padding:6px 28px 6px 10px;font-size:12px">
                     <option value="all">Barcha davr</option>
@@ -82,24 +82,109 @@
         </div>
     </div>
 
-    <!-- Two columns -->
+    <!-- 2. Foyda dinamikasi -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h3 class="card-title">Foyda dinamikasi (oylik)</h3>
+            <div class="flex gap-2 items-center">
+                <select id="profitYearSelect" class="form-select" style="width:auto;padding:6px 28px 6px 10px;font-size:12px">
+                    <option value="all">Barcha davr</option>
+                </select>
+            </div>
+        </div>
+        <div class="card-body">
+            <canvas id="profitChart" height="70"></canvas>
+        </div>
+    </div>
+
+    <!-- 3. Kunlik savdo | 4. Haftalik savdo -->
     <div class="grid grid-2 mb-4">
-        <!-- Top Products -->
         <div class="card">
             <div class="card-header">
-                <h3 class="card-title">Top mahsulotlar</h3>
+                <h3 class="card-title">Kunlik savdo (oxirgi 30 kun)</h3>
+            </div>
+            <div class="card-body">
+                <canvas id="dailyChart" height="120"></canvas>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Haftalik savdo (oxirgi 12 hafta)</h3>
+            </div>
+            <div class="card-body">
+                <canvas id="weeklyChart" height="120"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- 5. Savdolar soni oylik | 6. Foyda marjasi % -->
+    <div class="grid grid-2 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Savdolar soni (oyiga)</h3>
+                <select id="countYearSelect" class="form-select" style="width:auto;padding:6px 28px 6px 10px;font-size:12px"></select>
+            </div>
+            <div class="card-body">
+                <canvas id="salesCountChart" height="120"></canvas>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Foyda marjasi % (oylik)</h3>
+                <select id="marginYearSelect" class="form-select" style="width:auto;padding:6px 28px 6px 10px;font-size:12px"></select>
+            </div>
+            <div class="card-body">
+                <canvas id="marginChart" height="120"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- 7. Top mahsulotlar (doughnut) | 8. Top mijozlar (bar) -->
+    <div class="grid grid-2 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Top mahsulotlar (miqdor)</h3>
             </div>
             <div class="card-body" style="display:flex;align-items:center;justify-content:center;min-height:220px">
                 <canvas id="productsChart" width="220" height="220"></canvas>
             </div>
         </div>
-        <!-- Top Customers -->
         <div class="card">
             <div class="card-header">
-                <h3 class="card-title">Top mijozlar</h3>
+                <h3 class="card-title">Top mijozlar (xarid summa)</h3>
             </div>
             <div class="card-body" style="min-height:220px">
                 <canvas id="customersChart" height="220"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- 9. Top mahsulotlar daromad | 10. O'rtacha check & savdolar -->
+    <div class="grid grid-2 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Top mahsulotlar (daromad bo'yicha)</h3>
+            </div>
+            <div class="card-body">
+                <canvas id="productsRevenueChart" height="200"></canvas>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">O'rtacha check va savdolar</h3>
+            </div>
+            <div class="card-body">
+                <div class="grid grid-2 gap-4 mb-4">
+                    <div class="stat-card accent-green">
+                        <p class="stat-label">Jami savdolar soni</p>
+                        <p class="stat-value" id="totalSalesCount">0</p>
+                    </div>
+                    <div class="stat-card accent-blue">
+                        <p class="stat-label">O'rtacha check</p>
+                        <p class="stat-value" id="avgCheck">0</p>
+                    </div>
+                </div>
+                <canvas id="avgCheckChart" height="100"></canvas>
             </div>
         </div>
     </div>
@@ -167,11 +252,14 @@
 <script src="/static/js/nav.js"></script>
 <script>
 var CC=['#0a84ff','#30d158','#ff9f0a','#bf5af2','#ff453a','#ffd60a'];
-
+var OY_FALLBACK=['Yanvar','Fevral','Mart','Aprel','May','Iyun','Iyul','Avgust','Sentabr','Oktabr','Noyabr','Dekabr'];
+var OY_QISQA_FALLBACK=['Yan','Fev','Mar','Apr','May','Iyn','Iyl','Avg','Sen','Okt','Noy','Dek'];
+function _oyNom(i){return (typeof OY_NOMLARI!=='undefined'?OY_NOMLARI:OY_FALLBACK)[i]||'';}
+function _oyQisqa(i){return (typeof OY_QISQA!=='undefined'?OY_QISQA:OY_QISQA_FALLBACK)[i]||'';}
 function growthLabels(gd,isAll){
-    if(!gd.length)return [];
-    if(isAll) return gd.map(function(x){var p=x.month.split('-');var y=parseInt(p[0],10);var m=parseInt(p[1],10);return OY_QISQA[m-1]+' '+String(y).slice(-2);});
-    return gd.map(function(x){var m=parseInt(x.month.split('-')[1],10);return OY_NOMLARI[m-1];});
+    if(!gd||!gd.length)return [];
+    if(isAll) return gd.map(function(x){var p=x.month.split('-');var y=parseInt(p[0],10);var m=parseInt(p[1],10);return _oyQisqa(m-1)+' '+String(y).slice(-2);});
+    return gd.map(function(x){var m=parseInt(x.month.split('-')[1],10);return _oyNom(m-1);});
 }
 
 Chart.defaults.color='#8e8e93';
@@ -179,87 +267,211 @@ Chart.defaults.borderColor='rgba(255,255,255,.06)';
 Chart.defaults.font.family="-apple-system,'SF Pro Display','Inter',sans-serif";
 Chart.defaults.font.size=11;
 
-var growthChartInstance=null;
+var chartInstances={};
 
-function buildGrowthYearSelect(){
-    var sel=document.getElementById('growthYearSelect');
+function destroyChart(id){
+    if(chartInstances[id]){chartInstances[id].destroy();chartInstances[id]=null;}
+}
+
+function buildYearSelect(selId,callback){
+    var sel=document.getElementById(selId);
+    if(!sel)return;
     var y=new Date().getFullYear();
     var opts='<option value="all">Barcha davr</option>';
     for(var i=y;i>=y-10;i--) opts+='<option value="'+i+'"'+(i===y?' selected':'')+'>'+i+'</option>';
     sel.innerHTML=opts;
-    sel.addEventListener('change',function(){drawGrowthChart();});
+    sel.onchange=callback;
+}
+
+function buildGrowthYearSelect(){
+    buildYearSelect('growthYearSelect',function(){drawGrowthChart();});
+    buildYearSelect('profitYearSelect',function(){drawProfitChart();});
+    buildYearSelect('countYearSelect',function(){drawSalesCountChart();});
+    buildYearSelect('marginYearSelect',function(){drawMarginChart();});
+}
+
+var defaultChartOptions={
+    responsive:true,
+    maintainAspectRatio:true,
+    plugins:{legend:{display:false}},
+    scales:{
+        y:{beginAtZero:true,ticks:{callback:function(v){return fmt(v)}},grid:{color:"rgba(255,255,255,.04)"}},
+        x:{grid:{display:false}}
+    }
+};
+
+function getGrowthChartOptions(isAll){
+    var opt={
+        responsive:true,
+        maintainAspectRatio:true,
+        plugins:{legend:{display:false}},
+        scales:{
+            y:{beginAtZero:true,ticks:{callback:function(v){return fmt(v)}},grid:{color:"rgba(255,255,255,.04)"}},
+            x:{grid:{display:false},ticks:{maxRotation:isAll?45:0}}
+        }
+    };
+    return opt;
 }
 
 async function drawGrowthChart(){
     var sel=document.getElementById('growthYearSelect');
-    var val=sel.value;
+    var val=sel?sel.value:'all';
     var isAll=val==='all';
     var params=isAll?{period:'all'}:{year:val};
     try{
         var gd=await dashboardAPI.getGrowthDynamics(params);
-        if(growthChartInstance){growthChartInstance.destroy();growthChartInstance=null;}
-        if(!gd||gd.length===0){
-            var ctx=document.getElementById('growthChart').getContext('2d');
-            if(ctx){ctx.font='14px system-ui';ctx.fillStyle='var(--text-tertiary)';ctx.textAlign='center';ctx.fillText('Ma\'lumot yo\'q',document.getElementById('growthChart').width/2,document.getElementById('growthChart').height/2);}
-            return;
-        }
-        growthChartInstance=new Chart(document.getElementById('growthChart'),{
+        destroyChart('growth');
+        if(!gd||gd.length===0){emptyChart('growthChart','Ma\'lumot yo\'q');return;}
+        chartInstances.growth=new Chart(document.getElementById('growthChart'),{
             type:'line',
-            data:{
-                labels:growthLabels(gd,isAll),
-                datasets:[{
-                    label:'Savdo',data:gd.map(function(x){return x.sales}),
-                    borderColor:'#0a84ff',backgroundColor:'rgba(10,132,255,.1)',
-                    borderWidth:2,tension:.4,fill:true,pointRadius:3,pointBackgroundColor:'#0a84ff'
-                }]
-            },
-            options:{responsive:true,plugins:{legend:{display:false}},
-                scales:{y:{beginAtZero:true,ticks:{callback:function(v){return fmt(v)}},grid:{color:'rgba(255,255,255,.04)'}},x:{grid:{display:false},ticks:{maxRotation:isAll?45:0,minRotation:0}}}}
+            data:{labels:growthLabels(gd,isAll),datasets:[{label:'Savdo',data:gd.map(function(x){return x.sales}),borderColor:'#0a84ff',backgroundColor:'rgba(10,132,255,.1)',borderWidth:2,tension:.4,fill:true,pointRadius:3}]},
+            options:getGrowthChartOptions(isAll)
+        });
+    }catch(e){console.error(e)}
+}
+function emptyChart(canvasId,text){
+    var el=document.getElementById(canvasId);
+    if(!el)return;
+    var ctx=el.getContext('2d');
+    ctx.clearRect(0,0,el.width,el.height);
+    ctx.font='14px system-ui';ctx.fillStyle='var(--text-tertiary)';ctx.textAlign='center';
+    ctx.fillText(text,el.width/2,el.height/2);
+}
+async function drawProfitChart(){
+    var sel=document.getElementById('profitYearSelect');
+    var val=sel?sel.value:'all';
+    var isAll=val==='all';
+    var params=isAll?{period:'all'}:{year:val};
+    try{
+        var pd=await dashboardAPI.getProfitDynamics(params);
+        destroyChart('profit');
+        if(!pd||pd.length===0){emptyChart('profitChart','Ma\'lumot yo\'q');return;}
+        chartInstances.profit=new Chart(document.getElementById('profitChart'),{
+            type:'line',
+            data:{labels:pd.map(function(x){var m=parseInt(x.month.split('-')[1],10);return isAll?_oyQisqa(m-1)+' '+x.month.slice(0,4).slice(-2):_oyNom(m-1);}),datasets:[{label:'Foyda',data:pd.map(function(x){return x.profit}),borderColor:'#30d158',backgroundColor:'rgba(48,209,88,.1)',borderWidth:2,tension:.4,fill:true,pointRadius:3}]},
+            options:defaultChartOptions
+        });
+    }catch(e){console.error(e)}
+}
+async function drawDailyChart(){
+    try{
+        var dd=await dashboardAPI.getDailySales(30);
+        destroyChart('daily');
+        if(!dd||dd.length===0){emptyChart('dailyChart','Ma\'lumot yo\'q');return;}
+        chartInstances.daily=new Chart(document.getElementById('dailyChart'),{
+            type:'bar',
+            data:{labels:dd.map(function(x){return fmtDShort(x.date)}),datasets:[{label:'Savdo',data:dd.map(function(x){return x.sales}),backgroundColor:'rgba(10,132,255,.7)',borderRadius:4}]},
+            options:defaultChartOptions
+        });
+    }catch(e){console.error(e)}
+}
+async function drawWeeklyChart(){
+    try{
+        var wd=await dashboardAPI.getWeeklySales(12);
+        destroyChart('weekly');
+        if(!wd||wd.length===0){emptyChart('weeklyChart','Ma\'lumot yo\'q');return;}
+        chartInstances.weekly=new Chart(document.getElementById('weeklyChart'),{
+            type:'bar',
+            data:{labels:wd.map(function(x){return x.label}),datasets:[{label:'Savdo',data:wd.map(function(x){return x.sales}),backgroundColor:'rgba(191,90,242,.7)',borderRadius:4}]},
+            options:defaultChartOptions
+        });
+    }catch(e){console.error(e)}
+}
+async function drawSalesCountChart(){
+    var sel=document.getElementById('countYearSelect');
+    var val=sel?sel.value:'all';
+    var params=val==='all'?{period:'all'}:{year:val};
+    try{
+        var cd=await dashboardAPI.getSalesCountDynamics(params);
+        destroyChart('salesCount');
+        if(!cd||cd.length===0){emptyChart('salesCountChart','Ma\'lumot yo\'q');return;}
+        var isAll=val==='all';
+        chartInstances.salesCount=new Chart(document.getElementById('salesCountChart'),{
+            type:'line',
+            data:{labels:cd.map(function(x){var m=parseInt(x.month.split('-')[1],10);return isAll?_oyQisqa(m-1)+' '+x.month.slice(0,4).slice(-2):_oyNom(m-1);}),datasets:[{label:'Savdolar soni',data:cd.map(function(x){return x.count}),borderColor:'#ff9f0a',backgroundColor:'rgba(255,159,10,.1)',borderWidth:2,tension:.4,fill:true,pointRadius:3}]},
+            options:defaultChartOptions
+        });
+    }catch(e){console.error(e)}
+}
+async function drawMarginChart(){
+    var sel=document.getElementById('marginYearSelect');
+    var val=sel?sel.value:'all';
+    var isAll=val==='all';
+    var params=isAll?{period:'all'}:{year:val};
+    try{
+        var gd=await dashboardAPI.getGrowthDynamics(params);
+        var pd=await dashboardAPI.getProfitDynamics(params);
+        destroyChart('margin');
+        if(!gd||!pd||gd.length===0){emptyChart('marginChart','Ma\'lumot yo\'q');return;}
+        var margin=gd.map(function(x,i){var s=x.sales,p=(pd[i]&&pd[i].profit)||0;return s>0?Math.round((p/s)*100*10)/10:0;});
+        var marginOpts={
+            responsive:true,
+            plugins:{legend:{display:false}},
+            scales:{
+                y:{beginAtZero:true,ticks:{callback:function(v){return v+"%"}},grid:{color:"rgba(255,255,255,.04)"}},
+                x:{grid:{display:false}}
+            }
+        };
+        chartInstances.margin=new Chart(document.getElementById('marginChart'),{
+            type:'line',
+            data:{labels:gd.map(function(x){var m=parseInt(x.month.split('-')[1],10);return isAll?_oyQisqa(m-1):_oyNom(m-1);}),datasets:[{label:'Foyda %',data:margin,borderColor:'#ff453a',backgroundColor:'rgba(255,69,58,.1)',borderWidth:2,tension:.4,fill:true,pointRadius:3}]},
+            options:marginOpts
         });
     }catch(e){console.error(e)}
 }
 
 function setStats(s){
-    if(!s)return;
-    document.getElementById('totalRevenue').textContent=fmtC(s.total_revenue);
-    document.getElementById('monthlySales').textContent=fmtC(s.monthly_sales);
-    document.getElementById('totalProfit').textContent=fmtC(s.total_profit);
-    document.getElementById('monthlyProfitTag').textContent='Ushbu oy: '+fmtC(s.monthly_profit);
+    if(!s||typeof s!=='object')return;
+    var set=function(id,text){var el=document.getElementById(id);if(el)el.textContent=text;};
+    set('totalRevenue',fmtC(s.total_revenue));
+    set('monthlySales',fmtC(s.monthly_sales));
+    set('totalProfit',fmtC(s.total_profit));
+    set('monthlyProfitTag','Ushbu oy: '+fmtC(s.monthly_profit));
     var tq=s.total_quantity_sold_all_time!==undefined?s.total_quantity_sold_all_time:s.total_quantity_sold||0;
-    document.getElementById('totalQty').textContent=fmt(tq)+' dona';
-    document.getElementById('monthlyQtyTag').textContent='Ushbu oy: '+fmt(s.total_quantity_sold||0);
-    document.getElementById('dailySales').textContent=fmtC(s.daily_sales);
-    document.getElementById('yearlySales').textContent=fmtC(s.yearly_sales);
-    document.getElementById('customersCount').textContent=s.customers_count!==undefined?s.customers_count:0;
-    document.getElementById('productsCount').textContent=s.products_count!==undefined?s.products_count:0;
+    set('totalQty',fmt(tq)+' dona');
+    set('monthlyQtyTag','Ushbu oy: '+fmt(s.total_quantity_sold||0));
+    set('dailySales',fmtC(s.daily_sales));
+    set('yearlySales',fmtC(s.yearly_sales));
+    set('customersCount',s.customers_count!==undefined?s.customers_count:0);
+    set('productsCount',s.products_count!==undefined?s.products_count:0);
     var g=Number(s.growth_percent)||0;
-    document.getElementById('growthTag').textContent=(g>=0?'+':'')+g.toFixed(1)+'%';
-    document.getElementById('growthTag').style.color=g>=0?'var(--green)':'var(--red)';
+    set('growthTag',(g>=0?'+':'')+g.toFixed(1)+'%');
+    var tagEl=document.getElementById('growthTag');
+    if(tagEl) tagEl.style.color=g>=0?'var(--green)':'var(--red)';
 }
+
+var lastStats=null;
 
 async function load(forceRefresh){
     var errEl=document.getElementById('dashboardError');
-    errEl.style.display='none';
+    if(errEl) errEl.style.display='none';
     
-    // Majburiy yangilash yoki birinchi yuklashda keshni tozalash
-    if(forceRefresh && typeof cacheInvalidate==='function'){
+    // Har safar dashboard ochilganda keshni tozalab yangi ma'lumot olamiz
+    if(typeof cacheInvalidate==='function'){
         cacheInvalidate(['dash']);
     }
     
+    var defaultStats={daily_sales:0,monthly_sales:0,yearly_sales:0,total_revenue:0,monthly_profit:0,total_profit:0,total_quantity_sold:0,total_quantity_sold_all_time:0,growth_percent:0,customers_count:0,products_count:0};
     try{
         var s=await dashboardAPI.getStats();
-        if(s&&s.error){
+        lastStats=s;
+        if(!s||typeof s!=='object'||Array.isArray(s)){
+            setStats(defaultStats);
+            if(errEl){document.getElementById('dashboardErrorText').textContent='Server javobi noto\'g\'ri.';errEl.style.display='block';}
+        }else if(s.error){
             document.getElementById('dashboardErrorText').textContent=s.error;
-            errEl.style.display='block';
+            if(errEl) errEl.style.display='block';
             setStats(s);
-        }else if(s){
+        }else{
             setStats(s);
         }
     }catch(e){
-        console.error(e);
-        document.getElementById('dashboardErrorText').textContent=(e&&e.message)||'Ma\'lumot yuklanmadi. Token yoki serverni tekshiring.';
-        errEl.style.display='block';
-        setStats({daily_sales:0,monthly_sales:0,yearly_sales:0,total_revenue:0,monthly_profit:0,total_profit:0,total_quantity_sold:0,total_quantity_sold_all_time:0,growth_percent:0,customers_count:0,products_count:0});
+        console.error('Dashboard load xatolik:', e);
+        lastStats=null;
+        setStats(defaultStats);
+        var msg=(e&&e.message)||'Ma\'lumot yuklanmadi. Token yoki serverni tekshiring.';
+        if(document.getElementById('dashboardErrorText')) document.getElementById('dashboardErrorText').textContent=msg;
+        if(errEl) errEl.style.display='block';
     }
 
     buildGrowthYearSelect();
@@ -267,8 +479,9 @@ async function load(forceRefresh){
 
     /* Top products donut */
     try{
+        destroyChart('products');
         var tp=await dashboardAPI.getTopProducts();
-        new Chart(document.getElementById('productsChart'),{
+        chartInstances.products=new Chart(document.getElementById('productsChart'),{
             type:'doughnut',
             data:{labels:tp.slice(0,5).map(function(p){return p.name}),datasets:[{data:tp.slice(0,5).map(function(p){return p.total_quantity}),backgroundColor:CC,borderWidth:0}]},
             options:{responsive:false,cutout:'65%',plugins:{legend:{position:'bottom',labels:{boxWidth:8,padding:8,font:{size:11}}}}}
@@ -277,15 +490,16 @@ async function load(forceRefresh){
 
     /* Top customers bar */
     try{
+        destroyChart('customers');
         var tc=await dashboardAPI.getTopCustomers();
-        new Chart(document.getElementById('customersChart'),{
+        chartInstances.customers=new Chart(document.getElementById('customersChart'),{
             type:'bar',
             data:{labels:tc.map(function(c){return c.name.length>14?c.name.substring(0,14)+'…':c.name}),datasets:[{label:'Xarid',data:tc.map(function(c){return c.total_amount}),backgroundColor:'rgba(10,132,255,.7)',borderRadius:4}]},
             options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{beginAtZero:true,ticks:{callback:function(v){return fmt(v)}},grid:{color:'rgba(255,255,255,.04)'}},y:{grid:{display:false}}}}
         });
     }catch(e){console.error(e)}
 
-    /* Detail stats */
+    /* Detail stats + o'rtacha check */
     try{
         var d=await dashboardAPI.getDetailedStats();
         document.getElementById('topProductName').textContent=d.top_product.name;
@@ -293,6 +507,46 @@ async function load(forceRefresh){
         document.getElementById('topProductAmt').textContent=fmtC(d.top_product.amount);
         document.getElementById('topCustomerName').textContent=d.top_customer.name;
         document.getElementById('topCustomerAmt').textContent=fmtC(d.top_customer.amount);
+        var totalCount=d.total_sales_count||0;
+        document.getElementById('totalSalesCount').textContent=fmt(totalCount);
+        var rev=lastStats&&lastStats.total_revenue?lastStats.total_revenue:0;
+        document.getElementById('avgCheck').textContent=totalCount>0?fmtC(Math.round(rev/totalCount)):fmtC(0);
+    }catch(e){console.error(e)}
+
+    await drawProfitChart();
+    await drawDailyChart();
+    await drawWeeklyChart();
+    await drawSalesCountChart();
+    await drawMarginChart();
+
+    /* Top products by revenue (bar) */
+    try{
+        var tp=await dashboardAPI.getTopProducts();
+        destroyChart('productsRevenue');
+        var byRev=tp.slice(0,8).sort(function(a,b){return (b.total_amount||0)-(a.total_amount||0);});
+        if(byRev.length){
+            chartInstances.productsRevenue=new Chart(document.getElementById('productsRevenueChart'),{
+                type:'bar',
+                data:{labels:byRev.map(function(p){return p.name.length>12?p.name.substring(0,12)+'…':p.name}),datasets:[{label:'Daromad',data:byRev.map(function(p){return p.total_amount}),backgroundColor:'rgba(48,209,88,.7)',borderRadius:4}]},
+                options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{callback:function(v){return fmt(v)}},grid:{color:"rgba(255,255,255,.04)"}},x:{grid:{display:false}}},indexAxis:"y"}
+            });
+        }else emptyChart('productsRevenueChart','Ma\'lumot yo\'q');
+    }catch(e){console.error(e)}
+
+    /* Oylik o'rtacha check grafik (joriy yil) */
+    try{
+        var y=new Date().getFullYear();
+        var gd=await dashboardAPI.getGrowthDynamics({year:y});
+        var cd=await dashboardAPI.getSalesCountDynamics({year:y});
+        destroyChart('avgCheck');
+        if(gd.length&&cd.length){
+            var avgData=gd.map(function(x,i){var sales=x.sales,c=cd[i]&&cd[i].count?cd[i].count:0;return c>0?Math.round(sales/c):0;});
+            chartInstances.avgCheck=new Chart(document.getElementById('avgCheckChart'),{
+                type:'line',
+                data:{labels:gd.map(function(x){var m=parseInt(x.month.split('-')[1],10);return _oyNom(m-1);}),datasets:[{label:'O\'rtacha check',data:avgData,borderColor:'#0a84ff',backgroundColor:'rgba(10,132,255,.1)',borderWidth:2,tension:.4,fill:true,pointRadius:2}]},
+                options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{callback:function(v){return fmt(v)}},grid:{color:"rgba(255,255,255,.04)"}},x:{grid:{display:false}}}}
+            });
+        }else emptyChart('avgCheckChart','Ma\'lumot yo\'q');
     }catch(e){console.error(e)}
 
     /* AI */
@@ -318,7 +572,7 @@ function buildMonthYearSelects(){
     // Oylar
     var mOpts='';
     for(var i=1;i<=12;i++){
-        mOpts+='<option value="'+i+'"'+(i===curMonth?' selected':'')+'>'+OY_NOMLARI[i-1]+'</option>';
+        mOpts+='<option value="'+i+'"'+(i===curMonth?' selected':'')+'>'+_oyNom(i-1)+'</option>';
     }
     monthSel.innerHTML=mOpts;
     
@@ -340,7 +594,7 @@ async function showMonthlyStats(){
     var month=parseInt(document.getElementById('monthSelect').value);
     var year=parseInt(document.getElementById('yearSelect').value);
     
-    document.getElementById('monthlyModalTitle').textContent=OY_NOMLARI[month-1]+' '+year+' statistikasi';
+    document.getElementById('monthlyModalTitle').textContent=_oyNom(month-1)+' '+year+' statistikasi';
     document.getElementById('monthlyModalBody').innerHTML='<div class="spinner" style="margin:40px auto"></div>';
     document.getElementById('monthlyModal').classList.add('active');
     
